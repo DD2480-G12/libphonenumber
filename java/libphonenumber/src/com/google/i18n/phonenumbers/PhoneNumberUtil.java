@@ -1448,8 +1448,17 @@ public class PhoneNumberUtil {
    */
   public String formatNumberForMobileDialing(PhoneNumber number, String regionCallingFrom,
                                              boolean withFormatting) {
+    /**
+     * 1 for beginning
+     */
     int countryCallingCode = number.getCountryCode();
+    /**
+     * 1 for if-statement
+     */
     if (!hasValidCountryCallingCode(countryCallingCode)) {
+      /**
+       * 1 for ternary
+       */
       return number.hasRawInput() ? number.getRawInput() : "";
     }
 
@@ -1459,29 +1468,50 @@ public class PhoneNumberUtil {
     String regionCode = getRegionCodeForCountryCode(countryCallingCode);
     PhoneNumberType numberType = getNumberType(numberNoExt);
     boolean isValidNumber = (numberType != PhoneNumberType.UNKNOWN);
+    /**
+     * 1 for if-statement
+     */
     if (regionCallingFrom.equals(regionCode)) {
+      /**
+       * 2 for bool-assignment
+       */
       boolean isFixedLineOrMobile =
           (numberType == PhoneNumberType.FIXED_LINE) || (numberType == PhoneNumberType.MOBILE)
           || (numberType == PhoneNumberType.FIXED_LINE_OR_MOBILE);
       // Carrier codes may be needed in some countries. We handle this here.
+      /**
+       * 1 + 1
+       */
       if (regionCode.equals("CO") && numberType == PhoneNumberType.FIXED_LINE) {
         formattedNumber =
             formatNationalNumberWithCarrierCode(numberNoExt, COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX);
+      /**
+       * 1 + 1
+       */
       } else if (regionCode.equals("BR") && isFixedLineOrMobile) {
         // Historically, we set this to an empty string when parsing with raw input if none was
         // found in the input string. However, this doesn't result in a number we can dial. For this
         // reason, we treat the empty string the same as if it isn't set at all.
+        /**
+         * 1 for ternary
+         */
         formattedNumber = numberNoExt.getPreferredDomesticCarrierCode().length() > 0
             ? formattedNumber = formatNationalNumberWithPreferredCarrierCode(numberNoExt, "")
             // Brazilian fixed line and mobile numbers need to be dialed with a carrier code when
             // called within Brazil. Without that, most of the carriers won't connect the call.
             // Because of that, we return an empty string here.
             : "";
+      /**
+       * 1
+       */
       } else if (countryCallingCode == NANPA_COUNTRY_CODE) {
         // For NANPA countries, we output international format for numbers that can be dialed
         // internationally, since that always works, except for numbers which might potentially be
         // short numbers, which are always dialled in national format.
         PhoneMetadata regionMetadata = getMetadataForRegion(regionCallingFrom);
+        /**
+         * 1 + 1
+         */
         if (canBeInternationallyDialled(numberNoExt)
             && testNumberLength(getNationalSignificantNumber(numberNoExt), regionMetadata)
                 != ValidationResult.TOO_SHORT) {
@@ -1493,6 +1523,9 @@ public class PhoneNumberUtil {
         // For non-geographical countries, and Mexican, Chilean, and Uzbek fixed line and mobile
         // numbers, we output international format for numbers that can be dialed internationally as
         // that always works.
+        /**
+         * 6
+         */
         if ((regionCode.equals(REGION_CODE_FOR_NON_GEO_ENTITY)
              // MX fixed line and mobile numbers should always be formatted in international format,
              // even when dialed within MX. For national format to work, a carrier code needs to be
@@ -1515,13 +1548,22 @@ public class PhoneNumberUtil {
           formattedNumber = format(numberNoExt, PhoneNumberFormat.NATIONAL);
         }
       }
+      /**
+       * 1 + 1
+       */
     } else if (isValidNumber && canBeInternationallyDialled(numberNoExt)) {
       // We assume that short numbers are not diallable from outside their region, so if a number
       // is not a valid regular length phone number, we treat it as if it cannot be internationally
       // dialled.
+      /**
+       * 1 for ternary
+       */
       return withFormatting ? format(numberNoExt, PhoneNumberFormat.INTERNATIONAL)
                             : format(numberNoExt, PhoneNumberFormat.E164);
     }
+    /**
+     * 1 for ternary
+     */
     return withFormatting ? formattedNumber
                           : normalizeDiallableCharsOnly(formattedNumber);
   }
