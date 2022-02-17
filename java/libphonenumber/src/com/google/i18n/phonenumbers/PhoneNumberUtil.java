@@ -56,6 +56,8 @@ import java.util.regex.Pattern;
 public class PhoneNumberUtil {
   private static final Logger logger = Logger.getLogger(PhoneNumberUtil.class.getName());
 
+  public static boolean[] coverage = new boolean[23];
+
   /** Flags to use when compiling regular expressions for phone numbers. */
   static final int REGEX_FLAGS = Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE;
   // The minimum and maximum length of the national significant number.
@@ -2564,6 +2566,8 @@ public class PhoneNumberUtil {
    */
   private ValidationResult testNumberLength(
       CharSequence number, PhoneMetadata metadata, PhoneNumberType type) {
+
+    coverage[0] = true;
     PhoneNumberDesc descForType = getNumberDescByType(metadata, type);
     // There should always be "possibleLengths" set for every element. This is declared in the XML
     // schema which is verified by PhoneNumberMetadataSchemaTest.
@@ -2571,66 +2575,106 @@ public class PhoneNumberUtil {
     // as the parent, this is missing, so we fall back to the general desc (where no numbers of the
     // type exist at all, there is one possible length (-1) which is guaranteed not to match the
     // length of any real phone number).
-    List<Integer> possibleLengths = descForType.getPossibleLengthList().isEmpty()
-        ? metadata.getGeneralDesc().getPossibleLengthList() : descForType.getPossibleLengthList();
+
+    List<Integer> possibleLengths;
+    if (descForType.getPossibleLengthList().isEmpty()) {
+      coverage[1] = true;
+      possibleLengths = metadata.getGeneralDesc().getPossibleLengthList();
+    } else {
+      coverage[2] = true;
+      possibleLengths = descForType.getPossibleLengthList();
+    }
 
     List<Integer> localLengths = descForType.getPossibleLengthLocalOnlyList();
 
     if (type == PhoneNumberType.FIXED_LINE_OR_MOBILE) {
+      coverage[3] = true;
       if (!descHasPossibleNumberData(getNumberDescByType(metadata, PhoneNumberType.FIXED_LINE))) {
+        coverage[4] = true;
         // The rare case has been encountered where no fixedLine data is available (true for some
         // non-geographical entities), so we just check mobile.
         return testNumberLength(number, metadata, PhoneNumberType.MOBILE);
       } else {
+        coverage[5] = true;
         PhoneNumberDesc mobileDesc = getNumberDescByType(metadata, PhoneNumberType.MOBILE);
         if (descHasPossibleNumberData(mobileDesc)) {
+          coverage[6] = true;
           // Merge the mobile data in if there was any. We have to make a copy to do this.
           possibleLengths = new ArrayList<Integer>(possibleLengths);
           // Note that when adding the possible lengths from mobile, we have to again check they
           // aren't empty since if they are this indicates they are the same as the general desc and
           // should be obtained from there.
-          possibleLengths.addAll(mobileDesc.getPossibleLengthCount() == 0
-              ? metadata.getGeneralDesc().getPossibleLengthList()
-              : mobileDesc.getPossibleLengthList());
+
+          if (mobileDesc.getPossibleLengthCount() == 0) {
+            coverage[7] = true;
+            possibleLengths.addAll(metadata.getGeneralDesc().getPossibleLengthList());
+          } else {
+            coverage[8] = true;
+            possibleLengths.addAll(mobileDesc.getPossibleLengthList());
+          }
+
           // The current list is sorted; we need to merge in the new list and re-sort (duplicates
           // are okay). Sorting isn't so expensive because the lists are very small.
           Collections.sort(possibleLengths);
 
           if (localLengths.isEmpty()) {
+            coverage[9] = true;
             localLengths = mobileDesc.getPossibleLengthLocalOnlyList();
           } else {
+            coverage[10] = true;
             localLengths = new ArrayList<Integer>(localLengths);
             localLengths.addAll(mobileDesc.getPossibleLengthLocalOnlyList());
             Collections.sort(localLengths);
           }
+        } else {
+          coverage[11] = true;
         }
       }
+    } else {
+      coverage[12] = true;
     }
 
     // If the type is not supported at all (indicated by the possible lengths containing -1 at this
     // point) we return invalid length.
     if (possibleLengths.get(0) == -1) {
+      coverage[13] = true;
       return ValidationResult.INVALID_LENGTH;
+    } else {
+      coverage[14] = true;
     }
 
     int actualLength = number.length();
     // This is safe because there is never an overlap beween the possible lengths and the local-only
     // lengths; this is checked at build time.
     if (localLengths.contains(actualLength)) {
+      coverage[15] = true;
       return ValidationResult.IS_POSSIBLE_LOCAL_ONLY;
+    } else {
+      coverage[16] = true;
     }
 
     int minimumLength = possibleLengths.get(0);
+
     if (minimumLength == actualLength) {
+      coverage[17] = true;
       return ValidationResult.IS_POSSIBLE;
     } else if (minimumLength > actualLength) {
+      coverage[18] = true;
       return ValidationResult.TOO_SHORT;
     } else if (possibleLengths.get(possibleLengths.size() - 1) < actualLength) {
+      coverage[19] = true;
       return ValidationResult.TOO_LONG;
+    } else {
+      coverage[20] = true;
     }
     // We skip the first element; we've already checked it.
-    return possibleLengths.subList(1, possibleLengths.size()).contains(actualLength)
-        ? ValidationResult.IS_POSSIBLE : ValidationResult.INVALID_LENGTH;
+    if (possibleLengths.subList(1, possibleLengths.size()).contains(actualLength)) {
+      coverage[21] = true;
+      return ValidationResult.IS_POSSIBLE;
+    } else {
+      coverage[22] = true;
+      return ValidationResult.INVALID_LENGTH;
+    }
   }
 
   /**

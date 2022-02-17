@@ -1191,6 +1191,18 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     PhoneNumber gbNumber = new PhoneNumber();
     gbNumber.setCountryCode(44).setNationalNumber(7031231234L);
     assertEquals(PhoneNumberType.PERSONAL_NUMBER, phoneUtil.getNumberType(gbNumber));
+
+    System.out.println("Printing coverage result:");
+    int total = PhoneNumberUtil.coverage.length;
+    int reached = 0;
+    for (int i = 0; i < total; i++) {
+      //System.out.println(PhoneNumberUtil.coverage[i]);
+      if (PhoneNumberUtil.coverage[i]) {
+        reached++;
+      }
+    }
+    System.out.println((float) reached / (float) total * 100.0 + "%");
+    System.out.println(reached + " out of " + total);
   }
 
   public void testIsUnknown() {

@@ -16,6 +16,7 @@
 
 package com.google.i18n.phonenumbers.internal;
 
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import junit.framework.TestCase;
 
 /**
