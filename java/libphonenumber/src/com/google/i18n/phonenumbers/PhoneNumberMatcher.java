@@ -389,28 +389,44 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
    * @return  the parsed and validated phone number match, or null
    */
   private PhoneNumberMatch parseAndVerify(CharSequence candidate, int offset) {
+    // Using McCabe and a simple method adding points for if, boolean operators, or try-catch
+    // Entry point: +1 point
+    // Try-catch statement: +1 point
     try {
       // Check the candidate doesn't contain any formatting which would indicate that it really
       // isn't a phone number.
+
+      // If-statement: +1 point, OR-operator: +1 point
       if (!MATCHING_BRACKETS.matcher(candidate).matches() || PUB_PAGES.matcher(candidate).find()) {
         return null;
       }
-
       // If leniency is set to VALID or stricter, we also want to skip numbers that are surrounded
       // by Latin alphabetic characters, to skip cases like abc8005001234 or 8005001234def.
+
+      // If-statement: +1 point
       if (leniency.compareTo(Leniency.VALID) >= 0) {
         // If the candidate is not at the start of the text, and does not start with phone-number
         // punctuation, check the previous character.
+
+        // If-statement: +1 point, AND-operator: +1 point
         if (offset > 0 && !LEAD_CLASS.matcher(candidate).lookingAt()) {
+
           char previousChar = text.charAt(offset - 1);
           // We return null if it is a latin letter or an invalid punctuation symbol.
+
+          // If-statement: +1 point, OR-operator: +1 point
           if (isInvalidPunctuationSymbol(previousChar) || isLatinLetter(previousChar)) {
             return null;
           }
         }
+
         int lastCharIndex = offset + candidate.length();
+
+        // If-statement: +1 point
         if (lastCharIndex < text.length()) {
           char nextChar = text.charAt(lastCharIndex);
+
+          // If-statement: +1 point, OR-operator: +1 point
           if (isInvalidPunctuationSymbol(nextChar) || isLatinLetter(nextChar)) {
             return null;
           }
@@ -419,6 +435,7 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
 
       PhoneNumber number = phoneUtil.parseAndKeepRawInput(candidate, preferredRegion);
 
+      // If-statement: +1 point
       if (leniency.verify(number, candidate, phoneUtil, this)) {
         // We used parseAndKeepRawInput to create this number, but for now we don't return the extra
         // values parsed. TODO: stop clearing all values here and switch all users over
@@ -432,6 +449,8 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
       // ignore and continue
     }
     return null;
+
+    // Total: 13 points
   }
 
   /**
