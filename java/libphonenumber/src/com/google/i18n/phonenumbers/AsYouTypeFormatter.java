@@ -303,31 +303,42 @@ public class AsYouTypeFormatter {
     return currentOutput;
   }
 
+  public boolean calledinputDigitWithOptionToRememberPosition = false;
+  public boolean[] branches = new boolean[21];
+
   @SuppressWarnings("fallthrough")
   private String inputDigitWithOptionToRememberPosition(char nextChar, boolean rememberPosition) {
     accruedInput.append(nextChar);
     if (rememberPosition) {
+      branches[0] = true;
       originalPosition = accruedInput.length();
     }
     // We do formatting on-the-fly only when each character entered is either a digit, or a plus
     // sign (accepted at the start of the number only).
     if (!isDigitOrLeadingPlusSign(nextChar)) {
+      branches[1] = true;
       ableToFormat = false;
       inputHasFormatting = true;
     } else {
+      branches[2] = true;
       nextChar = normalizeAndAccrueDigitsAndPlusSign(nextChar, rememberPosition);
     }
     if (!ableToFormat) {
+      branches[3] = true;
       // When we are unable to format because of reasons other than that formatting chars have been
       // entered, it can be due to really long IDDs or NDDs. If that is the case, we might be able
       // to do formatting again after extracting them.
       if (inputHasFormatting) {
+        branches[4] = true;
         return accruedInput.toString();
       } else if (attemptToExtractIdd()) {
+        branches[5] = true;
         if (attemptToExtractCountryCallingCode()) {
+          branches[6] = true;
           return attemptToChoosePatternWithPrefixExtracted();
         }
       } else if (ableToExtractLongerNdd()) {
+        branches[7] = true;
         // Add an additional space to separate long NDD and national significant number for
         // readability. We don't set shouldAddSpaceAfterNationalPrefix to true, since we don't want
         // this to change later when we choose formatting templates.
@@ -343,38 +354,56 @@ public class AsYouTypeFormatter {
       case 0:
       case 1:
       case 2:
+        branches[8] = true;
         return accruedInput.toString();
       case 3:
+        branches[9] = true;
         if (attemptToExtractIdd()) {
+          branches[10] = true;
           isExpectingCountryCallingCode = true;
         } else {  // No IDD or plus sign is found, might be entering in national format.
+          branches[11] = true;
           extractedNationalPrefix = removeNationalPrefixFromNationalNumber();
           return attemptToChooseFormattingPattern();
         }
         // fall through
       default:
+        branches[12] = true;
         if (isExpectingCountryCallingCode) {
+          branches[13] = true;
           if (attemptToExtractCountryCallingCode()) {
+            branches[14] = true;
             isExpectingCountryCallingCode = false;
           }
           return prefixBeforeNationalNumber + nationalNumber.toString();
         }
         if (possibleFormats.size() > 0) {  // The formatting patterns are already chosen.
+          branches[15] = true;
           String tempNationalNumber = inputDigitHelper(nextChar);
           // See if the accrued digits can be formatted properly already. If not, use the results
           // from inputDigitHelper, which does formatting based on the formatting pattern chosen.
           String formattedNumber = attemptToFormatAccruedDigits();
           if (formattedNumber.length() > 0) {
+            branches[16] = true;
             return formattedNumber;
           }
           narrowDownPossibleFormats(nationalNumber.toString());
           if (maybeCreateNewTemplate()) {
+            branches[17] = true;
             return inputAccruedNationalNumber();
           }
-          return ableToFormat
+          /**return ableToFormat
              ? appendNationalNumber(tempNationalNumber)
-             : accruedInput.toString();
+             : accruedInput.toString();*/
+          if(ableToFormat){
+            branches[18] = true;
+            return appendNationalNumber(tempNationalNumber);
+          }else{
+            branches[19] = true;
+            return accruedInput.toString();
+          }
         } else {
+          branches[20] = true;
           return attemptToChooseFormattingPattern();
         }
     }
