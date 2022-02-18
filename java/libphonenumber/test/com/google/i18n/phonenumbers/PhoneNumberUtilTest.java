@@ -901,6 +901,26 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
         .setItalianLeadingZero(true).setNumberOfLeadingZeros(2);
     assertEquals("000", phoneUtil.formatNumberForMobileDialing(auNumber, RegionCode.AU, false));
     assertEquals("", phoneUtil.formatNumberForMobileDialing(auNumber, RegionCode.NZ, false));
+
+    System.out.println("==================================================");
+    System.out.println("Branches Execution Array:");
+    int missedBranch = 0;
+    int totalBranches = PhoneNumberUtil.branches.length;
+    ArrayList<Integer> missedBranches = new ArrayList<>();
+    for (int i = 0; i < totalBranches; i++) {
+      if (!PhoneNumberUtil.branches[i]) {
+        missedBranch++;
+        missedBranches.add(i);
+      }
+      System.out.print(PhoneNumberUtil.branches[i] + " ");
+    }
+    int percent = (int)((double)(totalBranches - missedBranch) / (double)totalBranches * 100);
+    System.out.println();
+    System.out.println("Executed/Total Branches: " + (totalBranches - missedBranch) + "/" + totalBranches);
+    System.out.println("Missed Branches: " + missedBranch);
+    System.out.println("Coverage Percentage: " + percent + "%");
+    System.out.println("Non-covered Branches: " + missedBranches.toString());
+    System.out.println("==================================================");
   }
 
   public void testFormatByPattern() {
