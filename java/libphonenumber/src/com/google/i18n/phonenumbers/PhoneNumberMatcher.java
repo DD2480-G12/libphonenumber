@@ -378,7 +378,7 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
     }
     return null;
   }
-
+  public static boolean[] parseAndVerify_branchcov = new boolean[14];
   /**
    * Parses a phone number from the {@code candidate} using {@link PhoneNumberUtil#parse} and
    * verifies it matches the requested {@link #leniency}. If parsing and verification succeed, a
@@ -389,37 +389,69 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
    * @return  the parsed and validated phone number match, or null
    */
   private PhoneNumberMatch parseAndVerify(CharSequence candidate, int offset) {
+
+    // Branches are numbered from top to bottom as they are encountered
+    // Each branch has 2 entries in the array
+    //boolean[] parseAndVerify_branchcov = new boolean[14];
+
+
     try {
       // Check the candidate doesn't contain any formatting which would indicate that it really
       // isn't a phone number.
+      // Branch 0
       if (!MATCHING_BRACKETS.matcher(candidate).matches() || PUB_PAGES.matcher(candidate).find()) {
+        parseAndVerify_branchcov[0] = true;
         return null;
+      } else {
+        parseAndVerify_branchcov[1] = true;
       }
 
       // If leniency is set to VALID or stricter, we also want to skip numbers that are surrounded
       // by Latin alphabetic characters, to skip cases like abc8005001234 or 8005001234def.
+      // Branch 1
       if (leniency.compareTo(Leniency.VALID) >= 0) {
+        parseAndVerify_branchcov[2] = true;
         // If the candidate is not at the start of the text, and does not start with phone-number
         // punctuation, check the previous character.
+        // Branch 2
         if (offset > 0 && !LEAD_CLASS.matcher(candidate).lookingAt()) {
+          parseAndVerify_branchcov[4] = true;
           char previousChar = text.charAt(offset - 1);
           // We return null if it is a latin letter or an invalid punctuation symbol.
+          // Branch 3
           if (isInvalidPunctuationSymbol(previousChar) || isLatinLetter(previousChar)) {
+            parseAndVerify_branchcov[6] = true;
             return null;
+          } else {
+            parseAndVerify_branchcov[7] = true;
           }
+        } else {
+          parseAndVerify_branchcov[5] = true;
         }
         int lastCharIndex = offset + candidate.length();
+        // Branch 4
         if (lastCharIndex < text.length()) {
+          parseAndVerify_branchcov[8] = true;
           char nextChar = text.charAt(lastCharIndex);
+          // Branch 5
           if (isInvalidPunctuationSymbol(nextChar) || isLatinLetter(nextChar)) {
+            parseAndVerify_branchcov[10] = true;
             return null;
+          } else {
+            parseAndVerify_branchcov[11] = true;
           }
+        } else {
+          parseAndVerify_branchcov[9] = true;
         }
+      } else {
+        parseAndVerify_branchcov[3] = true;
       }
 
-      PhoneNumber number = phoneUtil.parseAndKeepRawInput(candidate, preferredRegion);
 
+      PhoneNumber number = phoneUtil.parseAndKeepRawInput(candidate, preferredRegion);
+      // Branch 6
       if (leniency.verify(number, candidate, phoneUtil, this)) {
+        parseAndVerify_branchcov[12] = true;
         // We used parseAndKeepRawInput to create this number, but for now we don't return the extra
         // values parsed. TODO: stop clearing all values here and switch all users over
         // to using rawInput() rather than the rawString() of PhoneNumberMatch.
@@ -427,6 +459,8 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
         number.clearRawInput();
         number.clearPreferredDomesticCarrierCode();
         return new PhoneNumberMatch(offset, candidate.toString(), number);
+      } else {
+        parseAndVerify_branchcov[13] = true;
       }
     } catch (NumberParseException e) {
       // ignore and continue

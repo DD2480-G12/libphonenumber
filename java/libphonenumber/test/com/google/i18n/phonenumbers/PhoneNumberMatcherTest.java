@@ -19,6 +19,7 @@ package com.google.i18n.phonenumbers;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.Leniency;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber.CountryCodeSource;
+import org.junit.AfterClass;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +33,23 @@ import java.util.NoSuchElementException;
  * @see PhoneNumberUtilTest {@link PhoneNumberUtilTest} for the origin of the test data
  */
 public class PhoneNumberMatcherTest extends TestMetadataTestCase {
+
+  @Override
+  protected void tearDown() throws Exception {
+    float cov = branchCoveragePercentage(PhoneNumberMatcher.parseAndVerify_branchcov);
+    String parseAndVerifyCoverage = String.format("%.2f%%", cov);
+    System.out.println("parseAndVerify: " + parseAndVerifyCoverage);
+    super.tearDown();
+  }
+
+  private static float branchCoveragePercentage(boolean[] cov) {
+    int total = 0;
+    for (boolean x: cov)
+    {
+      total += x ? 1 : 0;
+    }
+    return 100 * (float)total/cov.length;
+  }
 
   public void testContainsMoreThanOneSlashInNationalNumber() throws Exception {
     // A date should return true.
