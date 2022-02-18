@@ -2946,6 +2946,9 @@ public class PhoneNumberUtil {
            : CountryCodeSource.FROM_DEFAULT_COUNTRY;
   }
 
+
+  public boolean calledmaybeStripNationalPrefixAndCarrierCode = false;
+  public boolean[] branches = new boolean[50];
   /**
    * Strips any national prefix (such as 0, 1) present in the number provided.
    *
@@ -2958,15 +2961,28 @@ public class PhoneNumberUtil {
   // @VisibleForTesting
   boolean maybeStripNationalPrefixAndCarrierCode(
       StringBuilder number, PhoneMetadata metadata, StringBuilder carrierCode) {
+    calledmaybeStripNationalPrefixAndCarrierCode = true;
+
     int numberLength = number.length();
     String possibleNationalPrefix = metadata.getNationalPrefixForParsing();
+    /**
     if (numberLength == 0 || possibleNationalPrefix.length() == 0) {
       // Early return for numbers of zero length.
+      return false;
+    }*/
+    if (numberLength == 0){
+      branches[0] = true;
+      return false;
+    }
+    if(possibleNationalPrefix.length() == 0){
+      branches[1] = true;
       return false;
     }
     // Attempt to parse the first digits as a national prefix.
     Matcher prefixMatcher = regexCache.getPatternForRegex(possibleNationalPrefix).matcher(number);
+
     if (prefixMatcher.lookingAt()) {
+      branches[2] = true;
       PhoneNumberDesc generalDesc = metadata.getGeneralDesc();
       // Check if the original number is viable.
       boolean isViableOriginalNumber = matcherApi.matchNationalNumber(number, generalDesc, false);
@@ -2975,34 +2991,164 @@ public class PhoneNumberUtil {
       // remove the national prefix.
       int numOfGroups = prefixMatcher.groupCount();
       String transformRule = metadata.getNationalPrefixTransformRule();
-      if (transformRule == null || transformRule.length() == 0
-          || prefixMatcher.group(numOfGroups) == null) {
+      if (transformRule == null) {
+        branches[3] = true;
+        if (isViableOriginalNumber){
+          branches[4] = true;
+          if(!matcherApi.matchNationalNumber(
+                  number.substring(prefixMatcher.end()), generalDesc, false)){
+            branches[5] = true;
+            return false;
+          }
+        }
+        /**
         // If the original number was viable, and the resultant number is not, we return.
         if (isViableOriginalNumber
-            && !matcherApi.matchNationalNumber(
+                && !matcherApi.matchNationalNumber(
                 number.substring(prefixMatcher.end()), generalDesc, false)) {
           return false;
         }
+         */
+        if(carrierCode != null){
+          branches[6] = true;
+          if(numOfGroups > 0){
+            branches[7] = true;
+            if(prefixMatcher.group(numOfGroups) != null)){
+              branches[8] = true;
+              carrierCode.append(prefixMatcher.group(1));
+            }
+          }
+        }
+        /**
         if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
           carrierCode.append(prefixMatcher.group(1));
         }
+        */
         number.delete(0, prefixMatcher.end());
         return true;
-      } else {
-        // Check that the resultant number is still viable. If not, return. Check this by copying
-        // the string buffer and making the transformation on the copy first.
-        StringBuilder transformedNumber = new StringBuilder(number);
-        transformedNumber.replace(0, numberLength, prefixMatcher.replaceFirst(transformRule));
-        if (isViableOriginalNumber
-            && !matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)) {
-          return false;
+      }
+
+      if (transformRule.length() == 0) {
+        branches[9] = true;
+        if (isViableOriginalNumber){
+          branches[10] = true;
+          if(!matcherApi.matchNationalNumber(
+                  number.substring(prefixMatcher.end()), generalDesc, false)){
+            branches[11] = true;
+            return false;
+          }
         }
-        if (carrierCode != null && numOfGroups > 1) {
-          carrierCode.append(prefixMatcher.group(1));
+        /**
+         // If the original number was viable, and the resultant number is not, we return.
+         if (isViableOriginalNumber
+         && !matcherApi.matchNationalNumber(
+         number.substring(prefixMatcher.end()), generalDesc, false)) {
+         return false;
+         }
+         */
+        if(carrierCode != null){
+          branches[12] = true;
+          if(numOfGroups > 0){
+            branches[13] = true;
+            if(prefixMatcher.group(numOfGroups) != null)){
+              branches[14] = true;
+              carrierCode.append(prefixMatcher.group(1));
+            }
+          }
         }
-        number.replace(0, number.length(), transformedNumber.toString());
+        /**
+         if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
+         carrierCode.append(prefixMatcher.group(1));
+         }
+         */
+        number.delete(0, prefixMatcher.end());
         return true;
       }
+
+      if (prefixMatcher.group(numOfGroups) == null) {
+        branches[15] = true;
+        if (isViableOriginalNumber){
+          branches[16] = true;
+          if(!matcherApi.matchNationalNumber(
+                  number.substring(prefixMatcher.end()), generalDesc, false)){
+            branches[17] = true;
+            return false;
+          }
+        }
+        /**
+         // If the original number was viable, and the resultant number is not, we return.
+         if (isViableOriginalNumber
+         && !matcherApi.matchNationalNumber(
+         number.substring(prefixMatcher.end()), generalDesc, false)) {
+         return false;
+         }
+         */
+        if(carrierCode != null){
+          branches[18] = true;
+          if(numOfGroups > 0){
+            branches[19] = true;
+            if(prefixMatcher.group(numOfGroups) != null)){
+              branches[20] = true;
+              carrierCode.append(prefixMatcher.group(1));
+            }
+          }
+        }
+        /**
+         if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
+         carrierCode.append(prefixMatcher.group(1));
+         }
+         */
+        number.delete(0, prefixMatcher.end());
+        return true;
+      }
+      /**
+       if (transformRule == null || transformRule.length() == 0
+       || prefixMatcher.group(numOfGroups) == null) {
+       // If the original number was viable, and the resultant number is not, we return.
+       if (isViableOriginalNumber
+       && !matcherApi.matchNationalNumber(
+       number.substring(prefixMatcher.end()), generalDesc, false)) {
+       return false;
+       }
+       if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
+       carrierCode.append(prefixMatcher.group(1));
+       }
+       number.delete(0, prefixMatcher.end());
+       return true;
+       }
+       */
+
+      // Check that the resultant number is still viable. If not, return. Check this by copying
+      // the string buffer and making the transformation on the copy first.
+      StringBuilder transformedNumber = new StringBuilder(number);
+      transformedNumber.replace(0, numberLength, prefixMatcher.replaceFirst(transformRule));
+      if(isViableOriginalNumber){
+        branches[21] = true;
+        if(!matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)){
+          branches[22] = true;
+          return false;
+        }
+      }
+      /**
+      if (isViableOriginalNumber
+              && !matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)) {
+        return false;
+      }
+      */
+      if(carrierCode != null){
+        branches[23] = true;
+        if(numOfGroups > 1){
+          branches[24] = true;
+          carrierCode.append(prefixMatcher.group(1));
+        }
+      }
+      /**
+      if (carrierCode != null && numOfGroups > 1) {
+        carrierCode.append(prefixMatcher.group(1));
+      }
+      */
+      number.replace(0, number.length(), transformedNumber.toString());
+      return true;
     }
     return false;
   }
