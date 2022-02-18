@@ -314,6 +314,11 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     // Google MTV, which has national destination code (NDC) "650".
     assertEquals(3, phoneUtil.getLengthOfNationalDestinationCode(US_NUMBER));
 
+    // Same number as above but with an extension.
+    PhoneNumber US_NUMBER_WITH_EXTENSION =
+            new PhoneNumber().setCountryCode(1).setNationalNumber(6502530000L).setExtension("extension");
+    assertEquals(3, phoneUtil.getLengthOfNationalDestinationCode(US_NUMBER_WITH_EXTENSION));
+
     // A North America toll-free number, which has NDC "800".
     assertEquals(3, phoneUtil.getLengthOfNationalDestinationCode(US_TOLLFREE));
 
