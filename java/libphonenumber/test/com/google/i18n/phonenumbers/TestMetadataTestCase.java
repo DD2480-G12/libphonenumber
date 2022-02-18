@@ -51,8 +51,42 @@ public class TestMetadataTestCase extends TestCase {
     PhoneNumberUtil.setInstance(phoneUtil);
   }
 
+  private boolean[] coveredBranchesOverTime = new boolean[23];
   @Override
   protected void tearDown() throws Exception {
+    boolean calledFormatInOriginalFormat = phoneUtil.calledFormatInOriginalFormat;
+    if (!calledFormatInOriginalFormat) {
+      return;
+    }
+    boolean[] coveredBranches = phoneUtil.branches;
+    int totalBranches = coveredBranches.length;
+    int missedBranches = 0;
+    for (int i = 0; i < totalBranches; i++) {
+      if (!coveredBranchesOverTime[i]) {
+        if (coveredBranches[i]) {
+          coveredBranchesOverTime[i] = true;
+        } else {
+          missedBranches++;
+        }
+      }
+    }
+    int numCoveredBranches = totalBranches - missedBranches;
+    int coveragePercentage = (int)(((double) numCoveredBranches / (double) totalBranches) * 100);
+    StringBuilder nonCoveredBranches = new StringBuilder();
+    for (int i = 0; i < totalBranches; i++) {
+      if (!coveredBranchesOverTime[i]) {
+        nonCoveredBranches.append(i).append(", ");
+      }
+    }
+    System.out.println("##################################### Branch Coverage #######################################");
+    System.out.println("Function: PhoneNumberUtil::formatInOriginalFormat");
+    System.out.println("Total branches       " + totalBranches);
+    System.out.println("Covered branches     " + numCoveredBranches);
+    System.out.println("Missed branches      " + missedBranches);
+    System.out.println("Coverage percentage  " + coveragePercentage + "%");
+    System.out.println("Non-covered branches " + nonCoveredBranches);
+    System.out.println("#############################################################################################");
+
     PhoneNumberUtil.setInstance(null);
     super.tearDown();
   }
