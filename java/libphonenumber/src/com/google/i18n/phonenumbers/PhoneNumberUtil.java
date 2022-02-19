@@ -2113,6 +2113,9 @@ public class PhoneNumberUtil {
         return exampleNumber;
       }
     }
+    /*
+     * Untested: There are no example numbers for any type, which makes the execution continue past this point.
+     *  */
     // If there wasn't an example number for a region, try the non-geographical entities.
     for (int countryCallingCode : getSupportedGlobalNetworkCallingCodes()) {
       PhoneNumberDesc desc = getNumberDescByType(

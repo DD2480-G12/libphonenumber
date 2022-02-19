@@ -468,6 +468,15 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     assertNotNull(phoneUtil.getExampleNumberForType(PhoneNumberType.PREMIUM_RATE));
   }
 
+  /*
+  * Run the function with an unknown PhoneNumberType. This will make it not find any example number,
+  * which makes the code run past the first for loop, which improves coverage. The function should now
+  * return null, as it shouldn't find any example number at all.
+  * */
+  public void testGetExampleNumberWithoutRegion_ownTest1() {
+    assertNull(phoneUtil.getExampleNumberForType(PhoneNumberType.UNKNOWN));
+  }
+
   public void testConvertAlphaCharactersInNumber() {
     String input = "1800-ABC-DEF";
     // Alpha chars are converted to digits; everything else is left untouched.
