@@ -2995,34 +2995,53 @@ public class PhoneNumberUtil {
       String transformRule = metadata.getNationalPrefixTransformRule();
       if (transformRule == null || transformRule.length() == 0
           || prefixMatcher.group(numOfGroups) == null) {
-        // If the original number was viable, and the resultant number is not, we return.
-        if (isViableOriginalNumber
-            && !matcherApi.matchNationalNumber(
-                number.substring(prefixMatcher.end()), generalDesc, false)) {
-          return false;
-        }
-        if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
-          carrierCode.append(prefixMatcher.group(1));
-        }
-        number.delete(0, prefixMatcher.end());
-        return true;
+        return stripWhenNoTransformRule(isViableOriginalNumber, number, prefixMatcher, generalDesc,
+                carrierCode, numOfGroups);
       } else {
-        // Check that the resultant number is still viable. If not, return. Check this by copying
-        // the string buffer and making the transformation on the copy first.
-        StringBuilder transformedNumber = new StringBuilder(number);
-        transformedNumber.replace(0, numberLength, prefixMatcher.replaceFirst(transformRule));
-        if (isViableOriginalNumber
-            && !matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)) {
-          return false;
-        }
-        if (carrierCode != null && numOfGroups > 1) {
-          carrierCode.append(prefixMatcher.group(1));
-        }
-        number.replace(0, number.length(), transformedNumber.toString());
-        return true;
+        return stripWhenIsTransformRule(isViableOriginalNumber, number, prefixMatcher, generalDesc,
+                carrierCode, numOfGroups, transformRule);
       }
     }
     return false;
+  }
+
+  /*
+   * First new function for the refactoring of maybeStripNationalPrefixAndCarrierCode
+   * */
+  boolean stripWhenNoTransformRule(boolean isViableOriginalNumber, StringBuilder number, Matcher prefixMatcher,
+                                   PhoneNumberDesc generalDesc, StringBuilder carrierCode, int numOfGroups) {
+    // If the original number was viable, and the resultant number is not, we return.
+    if (isViableOriginalNumber
+            && !matcherApi.matchNationalNumber(
+            number.substring(prefixMatcher.end()), generalDesc, false)) {
+      return false;
+    }
+    if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
+      carrierCode.append(prefixMatcher.group(1));
+    }
+    number.delete(0, prefixMatcher.end());
+    return true;
+  }
+
+  /*
+   * Second new function for the refactoring of maybeStripNationalPrefixAndCarrierCode
+   * */
+  boolean stripWhenIsTransformRule(boolean isViableOriginalNumber, StringBuilder number, Matcher prefixMatcher,
+                                   PhoneNumberDesc generalDesc, StringBuilder carrierCode, int numOfGroups,
+                                   String transformRule) {
+    // Check that the resultant number is still viable. If not, return. Check this by copying
+    // the string buffer and making the transformation on the copy first.
+    StringBuilder transformedNumber = new StringBuilder(number);
+    transformedNumber.replace(0, number.length(), prefixMatcher.replaceFirst(transformRule));
+    if (isViableOriginalNumber
+            && !matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)) {
+      return false;
+    }
+    if (carrierCode != null && numOfGroups > 1) {
+      carrierCode.append(prefixMatcher.group(1));
+    }
+    number.replace(0, number.length(), transformedNumber.toString());
+    return true;
   }
 
   /**
