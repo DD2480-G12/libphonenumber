@@ -2586,27 +2586,19 @@ public class PhoneNumberUtil {
         if (descHasPossibleNumberData(mobileDesc)) {
           // Merge the mobile data in if there was any. We have to make a copy to do this.
           possibleLengths = new ArrayList<Integer>(possibleLengths);
-          // Note that when adding the possible lengths from mobile, we have to again check they
-          // aren't empty since if they are this indicates they are the same as the general desc and
-          // should be obtained from there.
-          possibleLengths.addAll(mobileDesc.getPossibleLengthCount() == 0
-              ? metadata.getGeneralDesc().getPossibleLengthList()
-              : mobileDesc.getPossibleLengthList());
-          // The current list is sorted; we need to merge in the new list and re-sort (duplicates
-          // are okay). Sorting isn't so expensive because the lists are very small.
-          Collections.sort(possibleLengths);
-
-          if (localLengths.isEmpty()) {
-            localLengths = mobileDesc.getPossibleLengthLocalOnlyList();
-          } else {
-            localLengths = new ArrayList<Integer>(localLengths);
-            localLengths.addAll(mobileDesc.getPossibleLengthLocalOnlyList());
-            Collections.sort(localLengths);
-          }
+          localLengths = useMobileNumberData(possibleLengths, localLengths, mobileDesc, metadata);
         }
       }
     }
 
+    return returnWhenNoSupportedType(possibleLengths, number, localLengths);
+  }
+
+  /*
+  * First new function for the refactoring of testNumberLength
+  * */
+  private ValidationResult returnWhenNoSupportedType(List<Integer> possibleLengths, CharSequence number,
+                                                     List<Integer> localLengths) {
     // If the type is not supported at all (indicated by the possible lengths containing -1 at this
     // point) we return invalid length.
     if (possibleLengths.get(0) == -1) {
@@ -2630,7 +2622,33 @@ public class PhoneNumberUtil {
     }
     // We skip the first element; we've already checked it.
     return possibleLengths.subList(1, possibleLengths.size()).contains(actualLength)
-        ? ValidationResult.IS_POSSIBLE : ValidationResult.INVALID_LENGTH;
+            ? ValidationResult.IS_POSSIBLE : ValidationResult.INVALID_LENGTH;
+  }
+
+  /*
+   * Second new function for the refactoring of testNumberLength
+   * */
+  private List<Integer> useMobileNumberData(List<Integer> possibleLengths, List<Integer> localLengths,
+                                                 PhoneNumberDesc mobileDesc, PhoneMetadata metadata) {
+    // Note that when adding the possible lengths from mobile, we have to again check they
+    // aren't empty since if they are this indicates they are the same as the general desc and
+    // should be obtained from there.
+    possibleLengths.addAll(mobileDesc.getPossibleLengthCount() == 0
+            ? metadata.getGeneralDesc().getPossibleLengthList()
+            : mobileDesc.getPossibleLengthList());
+    // The current list is sorted; we need to merge in the new list and re-sort (duplicates
+    // are okay). Sorting isn't so expensive because the lists are very small.
+    Collections.sort(possibleLengths);
+
+    if (localLengths.isEmpty()) {
+      localLengths = mobileDesc.getPossibleLengthLocalOnlyList();
+    } else {
+      localLengths = new ArrayList<Integer>(localLengths);
+      localLengths.addAll(mobileDesc.getPossibleLengthLocalOnlyList());
+      Collections.sort(localLengths);
+    }
+
+    return localLengths;
   }
 
   /**
