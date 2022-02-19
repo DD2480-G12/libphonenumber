@@ -2139,22 +2139,36 @@ public class PhoneNumberUtil {
    */
   public PhoneNumber getExampleNumberForNonGeoEntity(int countryCallingCode) {
     PhoneMetadata metadata = getMetadataForNonGeographicalRegion(countryCallingCode);
+
     if (metadata != null) {
       // For geographical entities, fixed-line data is always present. However, for non-geographical
       // entities, this is not the case, so we have to go through different types to find the
       // example number. We don't check fixed-line or personal number since they aren't used by
       // non-geographical entities (if this changes, a unit-test will catch this.)
+
+      /*
+       * (1) Untested: Not entering loop
+       *  */
       for (PhoneNumberDesc desc : Arrays.asList(metadata.getMobile(), metadata.getTollFree(),
                metadata.getSharedCost(), metadata.getVoip(), metadata.getVoicemail(),
                metadata.getUan(), metadata.getPremiumRate())) {
         try {
+          /*
+           * (2) Untested: If desc == null or !desc.hasExampleNumber()
+           *  */
           if (desc != null && desc.hasExampleNumber()) {
             return parse("+" + countryCallingCode + desc.getExampleNumber(), UNKNOWN_REGION);
           }
+        /*
+         * (3) Untested: NumberParseException
+         *  */
         } catch (NumberParseException e) {
           logger.log(Level.SEVERE, e.toString());
         }
       }
+    /*
+     * (4) Untested: metadata == null
+     *  */
     } else {
       logger.log(Level.WARNING,
                  "Invalid or unknown country calling code provided: " + countryCallingCode);

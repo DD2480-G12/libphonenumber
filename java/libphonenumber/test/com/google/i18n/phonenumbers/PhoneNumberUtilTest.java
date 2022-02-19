@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * Unit tests for PhoneNumberUtil.java
  *
@@ -418,6 +421,44 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
   public void testGetExampleNumberForNonGeoEntity() {
     assertEquals(INTERNATIONAL_TOLL_FREE, phoneUtil.getExampleNumberForNonGeoEntity(800));
     assertEquals(UNIVERSAL_PREMIUM_RATE, phoneUtil.getExampleNumberForNonGeoEntity(979));
+  }
+
+  /*
+  Checks the case where metadata == null by providing an incorrect calling code.
+  When running with incorrect calling code, the function should return null. Covers 4.
+   */
+  public void testGetExampleNumberForNonGeoEntity_ownTest1() {
+    assertEquals(null, phoneUtil.getExampleNumberForNonGeoEntity(123456789));
+  }
+
+  /*
+   Test that when the test is calling getMetadataForNonGeographicalRegion for a region which contains empty
+   metadata, the function should return null. Covers 1.
+   */
+  public void testGetExampleNumberForNonGeoEntity_ownTest2()  {
+    MultiFileMetadataSourceImpl metadataSource = mock(MultiFileMetadataSourceImpl.class);
+    Phonemetadata.PhoneMetadata meta = Phonemetadata.PhoneMetadata.newBuilder().build();
+    when(metadataSource.getMetadataForNonGeographicalRegion(46)).thenReturn(meta);
+    PhoneNumberUtil phoneUtil = new PhoneNumberUtil(metadataSource, CountryCodeToRegionCodeMapForTesting.getCountryCodeToRegionCodeMap());
+
+    assertNull(phoneUtil.getExampleNumberForNonGeoEntity(46));
+  }
+
+  /*
+  When the test is called for a country code which contains metadata with an invalid number,
+  a parse exception should happen, and the function should return null. Covers 3.
+   */
+  public void testGetExampleNumberForNonGeoEntity_ownTest3()  {
+    MultiFileMetadataSourceImpl metadataSource = mock(MultiFileMetadataSourceImpl.class);
+    Phonemetadata.PhoneMetadata meta = Phonemetadata.PhoneMetadata.newBuilder().build();
+    PhoneNumberDesc desc = PhoneNumberDesc.newBuilder().build();
+    desc.setExampleNumber("--ff--ff--ff--ff");
+    meta.setMobile(desc);
+    when(metadataSource.getMetadataForNonGeographicalRegion(46)).thenReturn(meta);
+
+    PhoneNumberUtil phoneUtil = new PhoneNumberUtil(metadataSource, CountryCodeToRegionCodeMapForTesting.getCountryCodeToRegionCodeMap());
+
+    assertNull(phoneUtil.getExampleNumberForNonGeoEntity(46));
   }
 
   public void testGetExampleNumberWithoutRegion() {
