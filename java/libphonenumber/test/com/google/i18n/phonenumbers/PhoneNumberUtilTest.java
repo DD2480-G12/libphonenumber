@@ -903,6 +903,75 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     assertEquals("", phoneUtil.formatNumberForMobileDialing(auNumber, RegionCode.NZ, false));
   }
 
+  public void testFormatNumberForMobileDialingWithInvalidCountryCode() {
+    // Test that the number has an invalid country calling code
+    PhoneNumber numberWithInvalidCountryCode = new PhoneNumber().setCountryCode(-1).setNationalNumber(6502530000L);
+    assertEquals("", phoneUtil.formatNumberForMobileDialing(numberWithInvalidCountryCode, RegionCode.US,
+            false));
+    PhoneNumber numberWithInvalidCountryCodeAndRawInput =
+            new PhoneNumber().setCountryCode(-1).setNationalNumber(6502530000L).setRawInput("+1 6502530000");
+    assertEquals("+1 6502530000", phoneUtil.formatNumberForMobileDialing(numberWithInvalidCountryCodeAndRawInput, RegionCode.US,
+            false));
+  }
+
+  public void testFormatNumberForMobileDialingCO() {
+    // Test fixed-line number in Colombia (CO)
+    PhoneNumber coFixedLineNumber = new PhoneNumber().setCountryCode(57).setNationalNumber(22123456L);
+    assertEquals("0322123456", phoneUtil.formatNumberForMobileDialing(coFixedLineNumber, "CO",
+            false));
+    PhoneNumber coTollFreeNumber = new PhoneNumber().setCountryCode(57).setNationalNumber(18001234567L);
+    assertEquals("018001234567", phoneUtil.formatNumberForMobileDialing(coTollFreeNumber, "CO",
+            false));
+  }
+
+  public void testFormatNumberForMobileDialingBR() {
+    // Test fixed-line or mobile number in Brazil (BR)
+    PhoneNumber brFixedLineNumber =
+            new PhoneNumber().setCountryCode(55).setNationalNumber(8001234567L);
+    assertEquals("", phoneUtil.formatNumberForMobileDialing(brFixedLineNumber, RegionCode.BR,
+            false));
+    brFixedLineNumber.setPreferredDomesticCarrierCode("12");
+    assertEquals("8001234567", phoneUtil.formatNumberForMobileDialing(brFixedLineNumber, RegionCode.BR,
+            false));
+    PhoneNumber brUnknownNumber = new PhoneNumber().setCountryCode(55).setNationalNumber(18001234567L);
+    assertEquals("18001234567", phoneUtil.formatNumberForMobileDialing(brUnknownNumber, RegionCode.BR,
+            false));
+  }
+
+  public void testFormatNumberForMobileDialingMX() {
+    // Test fixed-line or mobile number in Mexico (MX)
+    PhoneNumber mxFixedLineNumber =
+            new PhoneNumber().setCountryCode(52).setNationalNumber(2123456789L);
+    assertEquals("+522123456789", phoneUtil.formatNumberForMobileDialing(mxFixedLineNumber, RegionCode.MX,
+            false));
+    PhoneNumber mxUnknownNumber =
+            new PhoneNumber().setCountryCode(52).setNationalNumber(212345678L);
+    assertEquals("212345678", phoneUtil.formatNumberForMobileDialing(mxUnknownNumber, RegionCode.MX,
+            false));
+  }
+
+  public void testFormatNumberForMobileDialingCL() {
+    // Test fixed-line or mobile number in Chile (CL)
+    PhoneNumber clFixedLineNumber =
+            new PhoneNumber().setCountryCode(56).setNationalNumber(221234567L);
+    assertEquals("+56221234567", phoneUtil.formatNumberForMobileDialing(clFixedLineNumber, RegionCode.CL,
+            false));
+    PhoneNumber clUnknownNumber =
+            new PhoneNumber().setCountryCode(56).setNationalNumber(2123456789L);
+    assertEquals("2123456789", phoneUtil.formatNumberForMobileDialing(clUnknownNumber, RegionCode.CL,
+            false));
+  }
+
+  public void testFormatNumberForMobileDialingUZ() {
+    // Test fixed-line or mobile number in Uzbekistan (UZ)
+    PhoneNumber uzFixedLineNumber = new PhoneNumber().setCountryCode(998).setNationalNumber(612212345L);
+    assertEquals("+998612212345", phoneUtil.formatNumberForMobileDialing(uzFixedLineNumber, RegionCode.UZ,
+            false));
+    PhoneNumber uzUnknownNumber = new PhoneNumber().setCountryCode(998).setNationalNumber(612L);
+    assertEquals("612", phoneUtil.formatNumberForMobileDialing(uzUnknownNumber, RegionCode.UZ,
+            false));
+  }
+
   public void testFormatByPattern() {
     NumberFormat.Builder newNumFormat = NumberFormat.newBuilder();
     newNumFormat.setPattern("(\\d{3})(\\d{3})(\\d{4})");

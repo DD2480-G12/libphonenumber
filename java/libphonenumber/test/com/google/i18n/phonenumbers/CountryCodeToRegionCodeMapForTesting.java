@@ -157,6 +157,28 @@ public class CountryCodeToRegionCodeMapForTesting {
     listWithRegionCode.add("UZ");
     countryCodeToRegionCodeMap.put(998, listWithRegionCode);
 
+    // For Coverage Improvement
+
+    listWithRegionCode = new ArrayList<String>(1);
+    listWithRegionCode.add("CO");
+    countryCodeToRegionCodeMap.put(57, listWithRegionCode);
+
+    listWithRegionCode = new ArrayList<String>(1);
+    listWithRegionCode.add("BR");
+    countryCodeToRegionCodeMap.put(55, listWithRegionCode);
+
+    listWithRegionCode = new ArrayList<String>(1);
+    listWithRegionCode.add("MX");
+    countryCodeToRegionCodeMap.put(52, listWithRegionCode);
+
+    listWithRegionCode = new ArrayList<String>(1);
+    listWithRegionCode.add("CL");
+    countryCodeToRegionCodeMap.put(56, listWithRegionCode);
+
+    listWithRegionCode = new ArrayList<String>(1);
+    listWithRegionCode.add("UZ");
+    countryCodeToRegionCodeMap.put(998, listWithRegionCode);
+
     return countryCodeToRegionCodeMap;
   }
 }

@@ -1449,8 +1449,8 @@ public class PhoneNumberUtil {
   public String formatNumberForMobileDialing(PhoneNumber number, String regionCallingFrom,
                                              boolean withFormatting) {
     int countryCallingCode = number.getCountryCode();
-    if (!hasValidCountryCallingCode(countryCallingCode)) {
-      return number.hasRawInput() ? number.getRawInput() : "";
+    if (!hasValidCountryCallingCode(countryCallingCode)) {  // FIXME: partial covered
+      return number.hasRawInput() ? number.getRawInput() : "";  // FIXME: not covered
     }
 
     String formattedNumber = "";
@@ -1464,10 +1464,10 @@ public class PhoneNumberUtil {
           (numberType == PhoneNumberType.FIXED_LINE) || (numberType == PhoneNumberType.MOBILE)
           || (numberType == PhoneNumberType.FIXED_LINE_OR_MOBILE);
       // Carrier codes may be needed in some countries. We handle this here.
-      if (regionCode.equals("CO") && numberType == PhoneNumberType.FIXED_LINE) {
+      if (regionCode.equals("CO") && numberType == PhoneNumberType.FIXED_LINE) {  // FIXME: partial covered
         formattedNumber =
-            formatNationalNumberWithCarrierCode(numberNoExt, COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX);
-      } else if (regionCode.equals("BR") && isFixedLineOrMobile) {
+            formatNationalNumberWithCarrierCode(numberNoExt, COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX);  // FIXME: not covered
+      } else if (regionCode.equals("BR") && isFixedLineOrMobile) {  // FIXME: partial covered
         // Historically, we set this to an empty string when parsing with raw input if none was
         // found in the input string. However, this doesn't result in a number we can dial. For this
         // reason, we treat the empty string the same as if it isn't set at all.
@@ -1476,7 +1476,7 @@ public class PhoneNumberUtil {
             // Brazilian fixed line and mobile numbers need to be dialed with a carrier code when
             // called within Brazil. Without that, most of the carriers won't connect the call.
             // Because of that, we return an empty string here.
-            : "";
+            : "";  // FIXME: not covered
       } else if (countryCallingCode == NANPA_COUNTRY_CODE) {
         // For NANPA countries, we output international format for numbers that can be dialed
         // internationally, since that always works, except for numbers which might potentially be
@@ -1509,7 +1509,7 @@ public class PhoneNumberUtil {
              // the number in international format here.
              || ((regionCode.equals("MX") || regionCode.equals("CL")
                  || regionCode.equals("UZ")) && isFixedLineOrMobile))
-            && canBeInternationallyDialled(numberNoExt)) {
+            && canBeInternationallyDialled(numberNoExt)) {  // FIXME: partial covered
           formattedNumber = format(numberNoExt, PhoneNumberFormat.INTERNATIONAL);
         } else {
           formattedNumber = format(numberNoExt, PhoneNumberFormat.NATIONAL);
