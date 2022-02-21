@@ -399,21 +399,8 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
       // If leniency is set to VALID or stricter, we also want to skip numbers that are surrounded
       // by Latin alphabetic characters, to skip cases like abc8005001234 or 8005001234def.
       if (leniency.compareTo(Leniency.VALID) >= 0) {
-        // If the candidate is not at the start of the text, and does not start with phone-number
-        // punctuation, check the previous character.
-        if (offset > 0 && !LEAD_CLASS.matcher(candidate).lookingAt()) {
-          char previousChar = text.charAt(offset - 1);
-          // We return null if it is a latin letter or an invalid punctuation symbol.
-          if (isInvalidPunctuationSymbol(previousChar) || isLatinLetter(previousChar)) {
-            return null;
-          }
-        }
-        int lastCharIndex = offset + candidate.length();
-        if (lastCharIndex < text.length()) {
-          char nextChar = text.charAt(lastCharIndex);
-          if (isInvalidPunctuationSymbol(nextChar) || isLatinLetter(nextChar)) {
-            return null;
-          }
+        if (sequenceHasIllegalLeadingOrTrailingCharacter(candidate, offset)) {
+          return null;
         }
       }
 
@@ -432,6 +419,37 @@ final class PhoneNumberMatcher implements Iterator<PhoneNumberMatch> {
       // ignore and continue
     }
     return null;
+  }
+
+  /**
+   * Checks whether the character sequence {@code candidate} within {@link #text} has either
+   * an invalid punctuation symbol or latin letter in the position before the start of the
+   * character sequence {@code candidate}, or in the position after it. If no such illegal
+   * character is encountered, the result is false.
+   *
+   * @param candidate  the candidate match
+   * @param offset  the offset of {@code candidate} within {@link #text}
+   * @return  true if illegal character leads or trails the candidate, else false
+   */
+  private boolean sequenceHasIllegalLeadingOrTrailingCharacter(CharSequence candidate, int offset)
+  {
+    // If the candidate is not at the start of the text, and does not start with phone-number
+    // punctuation, check the previous character.
+    if (offset > 0 && !LEAD_CLASS.matcher(candidate).lookingAt()) {
+      char previousChar = text.charAt(offset - 1);
+      // We return null if it is a latin letter or an invalid punctuation symbol.
+      if (isInvalidPunctuationSymbol(previousChar) || isLatinLetter(previousChar)) {
+        return true;
+      }
+    }
+    int lastCharIndex = offset + candidate.length();
+    if (lastCharIndex < text.length()) {
+      char nextChar = text.charAt(lastCharIndex);
+      if (isInvalidPunctuationSymbol(nextChar) || isLatinLetter(nextChar)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
