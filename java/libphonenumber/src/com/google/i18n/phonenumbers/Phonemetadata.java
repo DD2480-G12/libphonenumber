@@ -159,23 +159,32 @@ public final class Phonemetadata {
     }
 
     public void writeExternal(ObjectOutput objectOutput) throws IOException {
+      // entire method untested
       objectOutput.writeUTF(pattern_);
       objectOutput.writeUTF(format_);
       int leadingDigitsPatternSize = leadingDigitsPatternSize();
       objectOutput.writeInt(leadingDigitsPatternSize);
+
+      // untested: 0 < leadingDigitsPatternSize and 0 >= leadingDigitsPatternSize
+      // can test with ::getLeadingDigitsPatternCount()
       for (int i = 0; i < leadingDigitsPatternSize; i++) {
         objectOutput.writeUTF(leadingDigitsPattern_.get(i));
       }
 
       objectOutput.writeBoolean(hasNationalPrefixFormattingRule);
+      // untested: hasNationalPrefixFormattingRule and !hasNationalPrefixFormattingRule
+      // can test with ::getNationalPrefixFormattingRule()
       if (hasNationalPrefixFormattingRule) {
         objectOutput.writeUTF(nationalPrefixFormattingRule_);
       }
+
       objectOutput.writeBoolean(hasDomesticCarrierCodeFormattingRule);
+      // untested: hasDomesticCarrierCodeFormattingRule and !hasDomesticCarrierCodeFormattingRule
       if (hasDomesticCarrierCodeFormattingRule) {
         objectOutput.writeUTF(domesticCarrierCodeFormattingRule_);
       }
       objectOutput.writeBoolean(nationalPrefixOptionalWhenFormatting_);
+      // entire method untested
     }
 
     public void readExternal(ObjectInput objectInput) throws IOException {
