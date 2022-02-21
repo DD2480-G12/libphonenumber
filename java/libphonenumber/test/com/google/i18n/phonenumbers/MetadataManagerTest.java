@@ -17,8 +17,17 @@
 package com.google.i18n.phonenumbers;
 
 import com.google.i18n.phonenumbers.Phonemetadata.PhoneMetadata;
+
+import java.io.*;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import junit.framework.TestCase;
+
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.mockito.Mockito.*;
+
 
 /**
  * Some basic tests to check that metadata can be correctly loaded.
@@ -85,4 +94,134 @@ public class MetadataManagerTest extends TestCase {
       assertTrue("Unexpected error: " + e, e.getMessage().contains("no/such/file_123"));
     }
   }
+
+  // Test that leading digit patterns are written when using writeExternal
+  public void testNumberFormatWriteExternalWithLeadingDigits() {
+    MultiFileMetadataSourceImpl source =
+            new MultiFileMetadataSourceImpl(MetadataManager.DEFAULT_METADATA_LOADER);
+    try {
+
+      PhoneMetadata pm1 = source.getMetadataForRegion("US");
+
+      Phonemetadata.NumberFormat nf1 = pm1.getIntlNumberFormat(0);
+
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+      ObjectOutput out = new ObjectOutputStream(buffer1);
+
+      nf1.writeExternal(out);
+      out.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+
+      Phonemetadata.NumberFormat nf2 = new Phonemetadata.NumberFormat();
+      nf2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      nf2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal + readExternal don't lose any information
+      assertTrue(Arrays.equals(output1, output2));
+
+      // assert that leading digit pattern counts are equal
+      // may be false even if the above assert is true
+      assertTrue(nf1.getLeadingDigitsPatternCount() == nf2.getLeadingDigitsPatternCount());
+
+
+    } catch (Exception e) {
+      fail("Did not expect exception: " + e);
+    }
+  }
+
+  // Test that the national prefix formatting rule is written if it exists
+  public void testNumberFormatWriteExternalNationalPrefixRule() {
+    Phonemetadata.NumberFormat nf1 = new Phonemetadata.NumberFormat();
+    // Set prefix formatting rule, then assert it is equal in the object
+    // created from it using writeExternal + readExternal
+    nf1.setNationalPrefixFormattingRule("$NP ($FG)");
+
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      nf1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      Phonemetadata.NumberFormat nf2 = new Phonemetadata.NumberFormat();
+      nf2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      nf2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal + readExternal don't lose any information
+      assertTrue(Arrays.equals(output1, output2));
+
+      // assert that writeExternal does actually write the national prefix rule
+      // and writes the condition that signals it exists
+      assertTrue(nf1.hasNationalPrefixFormattingRule() && nf2.hasNationalPrefixFormattingRule());
+      assertTrue(nf1.getNationalPrefixFormattingRule().equals(nf2.getNationalPrefixFormattingRule()));
+
+    } catch (Exception e) {
+      fail("Did not expect exception: " + e);
+    }
+  }
+
+  // Test that the domestic carrier formatting rule is written if it exists
+  public void testNumberFormatWriteExternalDomesticCarrierFormattingRule() {
+    Phonemetadata.NumberFormat nf1 = new Phonemetadata.NumberFormat();
+    nf1.setDomesticCarrierCodeFormattingRule("$NP ($FG)");
+
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      nf1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      Phonemetadata.NumberFormat nf2 = new Phonemetadata.NumberFormat();
+      nf2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      nf2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal + readExternal don't lose any information
+      assertTrue(Arrays.equals(output1, output2));
+
+      // assert that writeExternal does actually write the domestic carrier code formatting rule
+      // and writes the condition that signals it exists
+      assertTrue(nf1.hasDomesticCarrierCodeFormattingRule() && nf2.hasDomesticCarrierCodeFormattingRule());
+      assertTrue(nf1.getDomesticCarrierCodeFormattingRule().equals(nf2.getDomesticCarrierCodeFormattingRule()));
+
+    } catch (Exception e) {
+      fail("Did not expect exception: " + e);
+    }
+  }
+
 }
