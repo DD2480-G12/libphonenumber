@@ -1438,6 +1438,118 @@ public class PhoneNumberUtil {
    * Returns a number formatted in such a way that it can be dialed from a mobile phone in a
    * specific region. If the number cannot be reached from the region (e.g. some countries block
    * toll-free numbers from being called outside of the country), the method returns an empty
+   * string. The dialed number and the calling number need to be in the same region, and the number
+   * is one of NANPA countries.
+   *
+   * @param numberNoExt  the phone number to be formatted (without extension)
+   * @param regionCallingFrom  the region where the call is being placed
+   * @return  the formatted phone number
+   */
+  public String formatNumberForMobileDialingInSameRegionInNANPA(PhoneNumber numberNoExt, String regionCallingFrom) {
+    // For NANPA countries, we output international format for numbers that can be dialed
+    // internationally, since that always works, except for numbers which might potentially be
+    // short numbers, which are always dialled in national format.
+    PhoneMetadata regionMetadata = getMetadataForRegion(regionCallingFrom);
+    if (canBeInternationallyDialled(numberNoExt)
+            && testNumberLength(getNationalSignificantNumber(numberNoExt), regionMetadata)
+            != ValidationResult.TOO_SHORT) {
+      return format(numberNoExt, PhoneNumberFormat.INTERNATIONAL);
+    } else {
+      return format(numberNoExt, PhoneNumberFormat.NATIONAL);
+    }
+  }
+
+  /**
+   * Returns a number formatted in such a way that it can be dialed from a mobile phone in a
+   * specific region. If the number cannot be reached from the region (e.g. some countries block
+   * toll-free numbers from being called outside of the country), the method returns an empty
+   * string. The dialed number and the calling number need to be in the same region, and the number
+   * is either one of non-geographical countries, or Mexican, Chilean, and Uzbek fixed line and mobile numbers.
+   *
+   * @param numberNoExt  the phone number to be formatted (without extension)
+   * @param regionCode  the region of the dialed number
+   * @param isFixedLineOrMobile if the number is fixed-line or mobile
+   * @return  the formatted phone number
+   */
+  public String formatNumberForMobileDialingInSameRegionInNonGeo(PhoneNumber numberNoExt, String regionCode, boolean isFixedLineOrMobile) {
+    // For non-geographical countries, and Mexican, Chilean, and Uzbek fixed line and mobile
+    // numbers, we output international format for numbers that can be dialed internationally as
+    // that always works.
+    if ((regionCode.equals(REGION_CODE_FOR_NON_GEO_ENTITY)
+            // MX fixed line and mobile numbers should always be formatted in international format,
+            // even when dialed within MX. For national format to work, a carrier code needs to be
+            // used, and the correct carrier code depends on if the caller and callee are from the
+            // same local area. It is trickier to get that to work correctly than using
+            // international format, which is tested to work fine on all carriers.
+            // CL fixed line numbers need the national prefix when dialing in the national format,
+            // but don't have it when used for display. The reverse is true for mobile numbers.  As
+            // a result, we output them in the international format to make it work.
+            // UZ mobile and fixed-line numbers have to be formatted in international format or
+            // prefixed with special codes like 03, 04 (for fixed-line) and 05 (for mobile) for
+            // dialling successfully from mobile devices. As we do not have complete information on
+            // special codes and to be consistent with formatting across all phone types we return
+            // the number in international format here.
+            || ((regionCode.equals("MX") || regionCode.equals("CL")
+            || regionCode.equals("UZ")) && isFixedLineOrMobile))
+            && canBeInternationallyDialled(numberNoExt)) {
+      return format(numberNoExt, PhoneNumberFormat.INTERNATIONAL);
+    } else {
+      return format(numberNoExt, PhoneNumberFormat.NATIONAL);
+    }
+  }
+
+  /**
+   * Returns a number formatted in such a way that it can be dialed from a mobile phone in a
+   * specific region. If the number cannot be reached from the region (e.g. some countries block
+   * toll-free numbers from being called outside of the country), the method returns an empty
+   * string. The dialed number and the calling number need to be in the same region.
+   *
+   * @param number  the phone number to be formatted
+   * @param regionCallingFrom  the region where the call is being placed
+   * @return  the formatted phone number
+   */
+  public String formatNumberForMobileDialingInSameRegion(PhoneNumber number, String regionCallingFrom) {
+    int countryCallingCode = number.getCountryCode();
+    if (!hasValidCountryCallingCode(countryCallingCode)) {
+      return number.hasRawInput() ? number.getRawInput() : "";
+    }
+
+    String formattedNumber = "";
+    // Clear the extension, as that part cannot normally be dialed together with the main number.
+    PhoneNumber numberNoExt = new PhoneNumber().mergeFrom(number).clearExtension();
+    String regionCode = getRegionCodeForCountryCode(countryCallingCode);
+    PhoneNumberType numberType = getNumberType(numberNoExt);
+
+    boolean isFixedLineOrMobile =
+            (numberType == PhoneNumberType.FIXED_LINE) || (numberType == PhoneNumberType.MOBILE)
+                    || (numberType == PhoneNumberType.FIXED_LINE_OR_MOBILE);
+    // Carrier codes may be needed in some countries. We handle this here.
+    if (regionCode.equals("CO") && numberType == PhoneNumberType.FIXED_LINE) {
+      formattedNumber =
+              formatNationalNumberWithCarrierCode(numberNoExt, COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX);
+    } else if (regionCode.equals("BR") && isFixedLineOrMobile) {
+      // Historically, we set this to an empty string when parsing with raw input if none was
+      // found in the input string. However, this doesn't result in a number we can dial. For this
+      // reason, we treat the empty string the same as if it isn't set at all.
+      formattedNumber = numberNoExt.getPreferredDomesticCarrierCode().length() > 0
+              ? formattedNumber = formatNationalNumberWithPreferredCarrierCode(numberNoExt, "")
+              // Brazilian fixed line and mobile numbers need to be dialed with a carrier code when
+              // called within Brazil. Without that, most of the carriers won't connect the call.
+              // Because of that, we return an empty string here.
+              : "";
+    } else if (countryCallingCode == NANPA_COUNTRY_CODE) {
+      formattedNumber = formatNumberForMobileDialingInSameRegionInNANPA(numberNoExt, regionCallingFrom);
+    } else {
+      formattedNumber = formatNumberForMobileDialingInSameRegionInNonGeo(numberNoExt, regionCode, isFixedLineOrMobile);
+    }
+
+    return formattedNumber;
+  }
+
+  /**
+   * Returns a number formatted in such a way that it can be dialed from a mobile phone in a
+   * specific region. If the number cannot be reached from the region (e.g. some countries block
+   * toll-free numbers from being called outside of the country), the method returns an empty
    * string.
    *
    * @param number  the phone number to be formatted
@@ -1459,62 +1571,10 @@ public class PhoneNumberUtil {
     String regionCode = getRegionCodeForCountryCode(countryCallingCode);
     PhoneNumberType numberType = getNumberType(numberNoExt);
     boolean isValidNumber = (numberType != PhoneNumberType.UNKNOWN);
+
     if (regionCallingFrom.equals(regionCode)) {
-      boolean isFixedLineOrMobile =
-          (numberType == PhoneNumberType.FIXED_LINE) || (numberType == PhoneNumberType.MOBILE)
-          || (numberType == PhoneNumberType.FIXED_LINE_OR_MOBILE);
-      // Carrier codes may be needed in some countries. We handle this here.
-      if (regionCode.equals("CO") && numberType == PhoneNumberType.FIXED_LINE) {
-        formattedNumber =
-            formatNationalNumberWithCarrierCode(numberNoExt, COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX);
-      } else if (regionCode.equals("BR") && isFixedLineOrMobile) {
-        // Historically, we set this to an empty string when parsing with raw input if none was
-        // found in the input string. However, this doesn't result in a number we can dial. For this
-        // reason, we treat the empty string the same as if it isn't set at all.
-        formattedNumber = numberNoExt.getPreferredDomesticCarrierCode().length() > 0
-            ? formattedNumber = formatNationalNumberWithPreferredCarrierCode(numberNoExt, "")
-            // Brazilian fixed line and mobile numbers need to be dialed with a carrier code when
-            // called within Brazil. Without that, most of the carriers won't connect the call.
-            // Because of that, we return an empty string here.
-            : "";
-      } else if (countryCallingCode == NANPA_COUNTRY_CODE) {
-        // For NANPA countries, we output international format for numbers that can be dialed
-        // internationally, since that always works, except for numbers which might potentially be
-        // short numbers, which are always dialled in national format.
-        PhoneMetadata regionMetadata = getMetadataForRegion(regionCallingFrom);
-        if (canBeInternationallyDialled(numberNoExt)
-            && testNumberLength(getNationalSignificantNumber(numberNoExt), regionMetadata)
-                != ValidationResult.TOO_SHORT) {
-          formattedNumber = format(numberNoExt, PhoneNumberFormat.INTERNATIONAL);
-        } else {
-          formattedNumber = format(numberNoExt, PhoneNumberFormat.NATIONAL);
-        }
-      } else {
-        // For non-geographical countries, and Mexican, Chilean, and Uzbek fixed line and mobile
-        // numbers, we output international format for numbers that can be dialed internationally as
-        // that always works.
-        if ((regionCode.equals(REGION_CODE_FOR_NON_GEO_ENTITY)
-             // MX fixed line and mobile numbers should always be formatted in international format,
-             // even when dialed within MX. For national format to work, a carrier code needs to be
-             // used, and the correct carrier code depends on if the caller and callee are from the
-             // same local area. It is trickier to get that to work correctly than using
-             // international format, which is tested to work fine on all carriers.
-             // CL fixed line numbers need the national prefix when dialing in the national format,
-             // but don't have it when used for display. The reverse is true for mobile numbers.  As
-             // a result, we output them in the international format to make it work.
-             // UZ mobile and fixed-line numbers have to be formatted in international format or
-             // prefixed with special codes like 03, 04 (for fixed-line) and 05 (for mobile) for
-             // dialling successfully from mobile devices. As we do not have complete information on
-             // special codes and to be consistent with formatting across all phone types we return
-             // the number in international format here.
-             || ((regionCode.equals("MX") || regionCode.equals("CL")
-                 || regionCode.equals("UZ")) && isFixedLineOrMobile))
-            && canBeInternationallyDialled(numberNoExt)) {
-          formattedNumber = format(numberNoExt, PhoneNumberFormat.INTERNATIONAL);
-        } else {
-          formattedNumber = format(numberNoExt, PhoneNumberFormat.NATIONAL);
-        }
-      }
+      // Format phone number when calling from the same region.
+      formattedNumber = formatNumberForMobileDialingInSameRegion(number, regionCallingFrom);
     } else if (isValidNumber && canBeInternationallyDialled(numberNoExt)) {
       // We assume that short numbers are not diallable from outside their region, so if a number
       // is not a valid regular length phone number, we treat it as if it cannot be internationally
