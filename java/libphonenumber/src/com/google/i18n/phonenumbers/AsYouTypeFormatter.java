@@ -166,19 +166,12 @@ public class AsYouTypeFormatter {
 
   private void getAvailableFormats(String leadingDigits) {
     // First decide whether we should use international or national number rules.
-    boolean isInternationalNumber = isCompleteNumber && extractedNationalPrefix.length() == 0;
-    List<NumberFormat> formatList =
-        (isInternationalNumber && currentMetadata.getIntlNumberFormatCount() > 0)
-            ? currentMetadata.getIntlNumberFormatList()
-            : currentMetadata.getNumberFormatList();
+    boolean isInternationalNumber = isNumberInternational();
+    List<NumberFormat> formatList = getFormatList(isInternationalNumber);
     for (NumberFormat format : formatList) {
       // Discard a few formats that we know are not relevant based on the presence of the national
       // prefix.
-      if (extractedNationalPrefix.length() > 0
-          && PhoneNumberUtil.formattingRuleHasFirstGroupOnly(
-              format.getNationalPrefixFormattingRule())
-          && !format.getNationalPrefixOptionalWhenFormatting()
-          && !format.hasDomesticCarrierCodeFormattingRule()) {
+      if (shouldFormatBeDiscarded(format)) {
         // If it is a national number that had a national prefix, any rules that aren't valid with a
         // national prefix should be excluded. A rule that has a carrier-code formatting rule is
         // kept since the national prefix might actually be an extracted carrier code - we don't
@@ -198,6 +191,26 @@ public class AsYouTypeFormatter {
       }
     }
     narrowDownPossibleFormats(leadingDigits);
+  }
+
+  private boolean shouldFormatBeDiscarded(NumberFormat format){
+    return extractedNationalPrefix.length() > 0
+            && PhoneNumberUtil.formattingRuleHasFirstGroupOnly(
+            format.getNationalPrefixFormattingRule())
+            && !format.getNationalPrefixOptionalWhenFormatting()
+            && !format.hasDomesticCarrierCodeFormattingRule();
+  }
+
+  private boolean isNumberInternational(){
+    return isCompleteNumber && extractedNationalPrefix.length() == 0;
+  }
+
+  private List<NumberFormat> getFormatList(boolean isInternationalNumber){
+    if(isInternationalNumber && currentMetadata.getIntlNumberFormatCount() > 0){
+      return currentMetadata.getIntlNumberFormatList();
+    } else{
+      return currentMetadata.getNumberFormatList();
+    }
   }
 
   private void narrowDownPossibleFormats(String leadingDigits) {
