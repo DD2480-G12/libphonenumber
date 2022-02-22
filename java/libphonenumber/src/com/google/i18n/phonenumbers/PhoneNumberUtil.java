@@ -2957,15 +2957,24 @@ public class PhoneNumberUtil {
    */
   // @VisibleForTesting
   boolean maybeStripNationalPrefixAndCarrierCode(
-      StringBuilder number, PhoneMetadata metadata, StringBuilder carrierCode) {
+          StringBuilder number, PhoneMetadata metadata, StringBuilder carrierCode) {
+    /**
+     * 1 (beginning of function)
+     */
     int numberLength = number.length();
     String possibleNationalPrefix = metadata.getNationalPrefixForParsing();
+    /**
+     * 1 + 1
+     */
     if (numberLength == 0 || possibleNationalPrefix.length() == 0) {
       // Early return for numbers of zero length.
       return false;
     }
     // Attempt to parse the first digits as a national prefix.
     Matcher prefixMatcher = regexCache.getPatternForRegex(possibleNationalPrefix).matcher(number);
+    /**
+     * 1
+     */
     if (prefixMatcher.lookingAt()) {
       PhoneNumberDesc generalDesc = metadata.getGeneralDesc();
       // Check if the original number is viable.
@@ -2975,14 +2984,23 @@ public class PhoneNumberUtil {
       // remove the national prefix.
       int numOfGroups = prefixMatcher.groupCount();
       String transformRule = metadata.getNationalPrefixTransformRule();
+      /**
+       * 1 + 2
+       */
       if (transformRule == null || transformRule.length() == 0
-          || prefixMatcher.group(numOfGroups) == null) {
+              || prefixMatcher.group(numOfGroups) == null) {
         // If the original number was viable, and the resultant number is not, we return.
+        /**
+         * 1 + 1
+         */
         if (isViableOriginalNumber
-            && !matcherApi.matchNationalNumber(
+                && !matcherApi.matchNationalNumber(
                 number.substring(prefixMatcher.end()), generalDesc, false)) {
           return false;
         }
+        /**
+         * 1 + 2
+         */
         if (carrierCode != null && numOfGroups > 0 && prefixMatcher.group(numOfGroups) != null) {
           carrierCode.append(prefixMatcher.group(1));
         }
@@ -2993,10 +3011,16 @@ public class PhoneNumberUtil {
         // the string buffer and making the transformation on the copy first.
         StringBuilder transformedNumber = new StringBuilder(number);
         transformedNumber.replace(0, numberLength, prefixMatcher.replaceFirst(transformRule));
+        /**
+         * 1 + 1
+         */
         if (isViableOriginalNumber
-            && !matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)) {
+                && !matcherApi.matchNationalNumber(transformedNumber.toString(), generalDesc, false)) {
           return false;
         }
+        /**
+         * 1 + 1
+         */
         if (carrierCode != null && numOfGroups > 1) {
           carrierCode.append(prefixMatcher.group(1));
         }
