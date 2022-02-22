@@ -910,6 +910,11 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     List<NumberFormat> newNumberFormats = new ArrayList<NumberFormat>();
     newNumberFormats.add(newNumFormat.build());
 
+    PhoneNumber newphone = new PhoneNumber();
+    assertEquals("0", phoneUtil.formatByPattern(newphone,
+            PhoneNumberFormat.INTERNATIONAL,
+            newNumberFormats));
+
     assertEquals("(650) 253-0000", phoneUtil.formatByPattern(US_NUMBER, PhoneNumberFormat.NATIONAL,
                                                              newNumberFormats));
     assertEquals("+1 (650) 253-0000", phoneUtil.formatByPattern(US_NUMBER,
