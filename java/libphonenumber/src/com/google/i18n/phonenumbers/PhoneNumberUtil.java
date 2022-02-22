@@ -1797,6 +1797,7 @@ public class PhoneNumberUtil {
     // trim anything at all. Similarly, if the national number was less than three digits, we don't
     // trim anything at all.
     String nationalNumber = getNationalSignificantNumber(number);
+    // Untested requirement: nationalNumber.length() <= 3
     if (nationalNumber.length() > 3) {
       int firstNationalNumberDigit = rawInput.indexOf(nationalNumber.substring(0, 3));
       if (firstNationalNumberDigit != -1) {
