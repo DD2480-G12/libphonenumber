@@ -305,28 +305,52 @@ public class AsYouTypeFormatter {
 
   @SuppressWarnings("fallthrough")
   private String inputDigitWithOptionToRememberPosition(char nextChar, boolean rememberPosition) {
+    /**
+     * 1 (Beginning of function)
+     */
     accruedInput.append(nextChar);
+    /**
+     * 1
+     */
     if (rememberPosition) {
       originalPosition = accruedInput.length();
     }
     // We do formatting on-the-fly only when each character entered is either a digit, or a plus
     // sign (accepted at the start of the number only).
+    /**
+     * 1
+     */
     if (!isDigitOrLeadingPlusSign(nextChar)) {
       ableToFormat = false;
       inputHasFormatting = true;
     } else {
       nextChar = normalizeAndAccrueDigitsAndPlusSign(nextChar, rememberPosition);
     }
+    /**
+     * 1
+     */
     if (!ableToFormat) {
       // When we are unable to format because of reasons other than that formatting chars have been
       // entered, it can be due to really long IDDs or NDDs. If that is the case, we might be able
       // to do formatting again after extracting them.
+      /**
+       * 1
+       */
       if (inputHasFormatting) {
         return accruedInput.toString();
+        /**
+         * 1
+         */
       } else if (attemptToExtractIdd()) {
+        /**
+         * 1
+         */
         if (attemptToExtractCountryCallingCode()) {
           return attemptToChoosePatternWithPrefixExtracted();
         }
+        /**
+         * 1
+         */
       } else if (ableToExtractLongerNdd()) {
         // Add an additional space to separate long NDD and national significant number for
         // readability. We don't set shouldAddSpaceAfterNationalPrefix to true, since we don't want
@@ -340,11 +364,20 @@ public class AsYouTypeFormatter {
     // We start to attempt to format only when at least MIN_LEADING_DIGITS_LENGTH digits (the plus
     // sign is counted as a digit as well for this purpose) have been entered.
     switch (accruedInputWithoutFormatting.length()) {
+      /**
+       * 3
+       */
       case 0:
       case 1:
       case 2:
         return accruedInput.toString();
+      /**
+       * 1
+       */
       case 3:
+        /**
+         * 1
+         */
         if (attemptToExtractIdd()) {
           isExpectingCountryCallingCode = true;
         } else {  // No IDD or plus sign is found, might be entering in national format.
@@ -353,27 +386,45 @@ public class AsYouTypeFormatter {
         }
         // fall through
       default:
+        /**
+         * 1
+         */
         if (isExpectingCountryCallingCode) {
+          /**
+           * 1
+           */
           if (attemptToExtractCountryCallingCode()) {
             isExpectingCountryCallingCode = false;
           }
           return prefixBeforeNationalNumber + nationalNumber.toString();
         }
+        /**
+         * 1
+         */
         if (possibleFormats.size() > 0) {  // The formatting patterns are already chosen.
           String tempNationalNumber = inputDigitHelper(nextChar);
           // See if the accrued digits can be formatted properly already. If not, use the results
           // from inputDigitHelper, which does formatting based on the formatting pattern chosen.
           String formattedNumber = attemptToFormatAccruedDigits();
+          /**
+           * 1
+           */
           if (formattedNumber.length() > 0) {
             return formattedNumber;
           }
           narrowDownPossibleFormats(nationalNumber.toString());
+          /**
+           * 1
+           */
           if (maybeCreateNewTemplate()) {
             return inputAccruedNationalNumber();
           }
+          /**
+           * 1 (ternary)
+           */
           return ableToFormat
-             ? appendNationalNumber(tempNationalNumber)
-             : accruedInput.toString();
+                  ? appendNationalNumber(tempNationalNumber)
+                  : accruedInput.toString();
         } else {
           return attemptToChooseFormattingPattern();
         }
