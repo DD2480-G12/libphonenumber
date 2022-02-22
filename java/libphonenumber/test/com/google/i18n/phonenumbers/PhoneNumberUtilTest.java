@@ -3160,4 +3160,23 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     assertFalse(phoneUtil.isMobileNumberPortableRegion(RegionCode.AE));
     assertFalse(phoneUtil.isMobileNumberPortableRegion(RegionCode.BS));
   }
+
+  // Tests that formatOutOfCountryKeepingAlphaChars doesn't fail on a short number
+  // Failure if the number is stripped away or an exception is thrown
+  // If not tested for, an error may creep in causing IndexOutOfBounds for short numbers
+  public void testFormatOutOfCountryKeepingAlphaCharsShortNationalNumber() {
+    PhoneNumber number = new PhoneNumber();
+
+    // The "national significant" part (91 here) of the phone number is expected to have length <= 3
+    // This number does not
+    number.setCountryCode(1).setNationalNumber(91L)
+            .setRawInput("91");
+
+    try {
+      assertEquals("1 91",
+              phoneUtil.formatOutOfCountryKeepingAlphaChars(number, RegionCode.US));
+    } catch (Exception e) {
+      fail("Did not expect exception: " + e);
+    }
+  }
 }
