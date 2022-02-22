@@ -310,6 +310,12 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     assertEquals(0, phoneUtil.getLengthOfGeographicalAreaCode(cnMobile));
   }
 
+  public void testgetLengthOfNationalDestinationCode_PhoneNumberWithExtension(){
+    US_NUMBER.setExtension("801-555-9864-964");
+    assertEquals(3, phoneUtil.getLengthOfNationalDestinationCode(US_NUMBER));
+
+  }
+
   public void testGetLengthOfNationalDestinationCode() {
     // Google MTV, which has national destination code (NDC) "650".
     assertEquals(3, phoneUtil.getLengthOfNationalDestinationCode(US_NUMBER));
