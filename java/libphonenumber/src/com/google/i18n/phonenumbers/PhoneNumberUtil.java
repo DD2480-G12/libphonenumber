@@ -1797,12 +1797,8 @@ public class PhoneNumberUtil {
     // trim anything at all. Similarly, if the national number was less than three digits, we don't
     // trim anything at all.
     String nationalNumber = getNationalSignificantNumber(number);
-    if (nationalNumber.length() > 3) {
-      int firstNationalNumberDigit = rawInput.indexOf(nationalNumber.substring(0, 3));
-      if (firstNationalNumberDigit != -1) {
-        rawInput = rawInput.substring(firstNationalNumberDigit);
-      }
-    }
+    rawInput = maybeStripNumberPrefix(rawInput, nationalNumber);
+
     PhoneMetadata metadataForRegionCallingFrom = getMetadataForRegion(regionCallingFrom);
     if (countryCode == NANPA_COUNTRY_CODE) {
       if (isNANPACountry(regionCallingFrom)) {
@@ -1810,37 +1806,13 @@ public class PhoneNumberUtil {
       }
     } else if (metadataForRegionCallingFrom != null
         && countryCode == getCountryCodeForValidRegion(regionCallingFrom)) {
-      NumberFormat formattingPattern =
-          chooseFormattingPatternForNumber(metadataForRegionCallingFrom.getNumberFormatList(),
-                                           nationalNumber);
-      if (formattingPattern == null) {
-        // If no pattern above is matched, we format the original input.
-        return rawInput;
-      }
-      NumberFormat.Builder newFormat = NumberFormat.newBuilder();
-      newFormat.mergeFrom(formattingPattern);
-      // The first group is the first group of digits that the user wrote together.
-      newFormat.setPattern("(\\d+)(.*)");
-      // Here we just concatenate them back together after the national prefix has been fixed.
-      newFormat.setFormat("$1$2");
-      // Now we format using this pattern instead of the default pattern, but with the national
-      // prefix prefixed if necessary.
-      // This will not work in the cases where the pattern (and not the leading digits) decide
-      // whether a national prefix needs to be used, since we have overridden the pattern to match
-      // anything, but that is not the case in the metadata to date.
-      return formatNsnUsingPattern(rawInput, newFormat.build(), PhoneNumberFormat.NATIONAL);
+      return formatNumberByRegionCallingFrom(rawInput, nationalNumber, metadataForRegionCallingFrom);
     }
-    String internationalPrefixForFormatting = "";
     // If an unsupported region-calling-from is entered, or a country with multiple international
     // prefixes, the international format of the number is returned, unless there is a preferred
     // international prefix.
-    if (metadataForRegionCallingFrom != null) {
-      String internationalPrefix = metadataForRegionCallingFrom.getInternationalPrefix();
-      internationalPrefixForFormatting =
-          SINGLE_INTERNATIONAL_PREFIX.matcher(internationalPrefix).matches()
-          ? internationalPrefix
-          : metadataForRegionCallingFrom.getPreferredInternationalPrefix();
-    }
+    String internationalPrefixForFormatting = setupInternationalPrefixForFormatting(metadataForRegionCallingFrom);
+
     StringBuilder formattedNumber = new StringBuilder(rawInput);
     String regionCode = getRegionCodeForCountryCode(countryCode);
     // Metadata cannot be null because the country calling code is valid.
@@ -1867,6 +1839,75 @@ public class PhoneNumberUtil {
   }
 
   /**
+   * Strips any characters leading nationalNumber within rawInput, if nationalNumber is
+   * within rawInput, and nationalNumber is longer than 3 characters. Else returns rawInput.
+   *
+   * @param rawInput raw input associated with a phone number
+   * @param nationalNumber significant part of phone number, excluding national prefix
+   * @return rawInput either stripped of prefix or untouched
+   */
+  private String maybeStripNumberPrefix(String rawInput, String nationalNumber)
+  {
+    if (nationalNumber.length() > 3) {
+      int firstNationalNumberDigit = rawInput.indexOf(nationalNumber.substring(0, 3));
+      if (firstNationalNumberDigit != -1) {
+        return rawInput.substring(firstNationalNumberDigit);
+      }
+    }
+    return rawInput;
+  }
+
+  /**
+   * Format a phone number using a format specified by the calling-from region.
+   * If no such format is specified, simply return the phone number rawInput.
+   *
+   * @param rawInput raw input associated with a phone number
+   * @param nationalNumber significant part of phone number, excluding national prefix
+   * @param metadataForRegionCallingFrom metadata for region a call is being placed from
+   * @return String formatted using format specified by the calling-from region
+   */
+  private String formatNumberByRegionCallingFrom(String rawInput, String nationalNumber, PhoneMetadata metadataForRegionCallingFrom)
+  {
+    NumberFormat formattingPattern =
+            chooseFormattingPatternForNumber(metadataForRegionCallingFrom.getNumberFormatList(),
+                    nationalNumber);
+    if (formattingPattern == null) {
+      // If no pattern above is matched, we format the original input.
+      return rawInput;
+    }
+    NumberFormat.Builder newFormat = NumberFormat.newBuilder();
+    newFormat.mergeFrom(formattingPattern);
+    // The first group is the first group of digits that the user wrote together.
+    newFormat.setPattern("(\\d+)(.*)");
+    // Here we just concatenate them back together after the national prefix has been fixed.
+    newFormat.setFormat("$1$2");
+    // Now we format using this pattern instead of the default pattern, but with the national
+    // prefix prefixed if necessary.
+    // This will not work in the cases where the pattern (and not the leading digits) decide
+    // whether a national prefix needs to be used, since we have overridden the pattern to match
+    // anything, but that is not the case in the metadata to date.
+    return formatNsnUsingPattern(rawInput, newFormat.build(), PhoneNumberFormat.NATIONAL);
+  }
+
+  /**
+   * Get the preferred international prefix for the region a call is being placed from.
+   * If the given metadata is null, returns an empty string.
+   *
+   * @param metadataForRegionCallingFrom metadata for region a call is being placed from
+   * @return international phone number prefix
+   */
+  private String setupInternationalPrefixForFormatting(PhoneMetadata metadataForRegionCallingFrom)
+  {
+    if (metadataForRegionCallingFrom != null) {
+      String internationalPrefix = metadataForRegionCallingFrom.getInternationalPrefix();
+      return SINGLE_INTERNATIONAL_PREFIX.matcher(internationalPrefix).matches()
+                      ? internationalPrefix
+                      : metadataForRegionCallingFrom.getPreferredInternationalPrefix();
+    }
+    return "";
+  }
+
+  /**
    * Gets the national significant number of a phone number. Note a national significant number
    * doesn't contain a national prefix or any formatting.
    *
@@ -1884,6 +1925,8 @@ public class PhoneNumberUtil {
     nationalNumber.append(number.getNationalNumber());
     return nationalNumber.toString();
   }
+
+
 
   /**
    * A helper function that is used by format and formatByPattern.
