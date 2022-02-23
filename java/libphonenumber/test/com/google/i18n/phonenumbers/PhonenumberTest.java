@@ -88,6 +88,14 @@ public class PhonenumberTest extends TestCase {
     assertFalse(numberA.hashCode() == numberB.hashCode());
   }
 
+  public void testExactlySameAs(){
+    PhoneNumber numberA = new PhoneNumber();
+    numberA.setCountryCode(1).setNationalNumber(6502530000L).setRawInput("+1 650 253 00 00").
+            setCountryCodeSource(CountryCodeSource.FROM_NUMBER_WITH_PLUS_SIGN);
+
+    assertFalse(numberA.exactlySameAs(null));
+  }
+
   public void testNonEqualWithPreferredDomesticCarrierCodeSetToDefault() throws Exception {
     PhoneNumber numberA = new PhoneNumber();
     numberA.setCountryCode(1).setNationalNumber(6502530000L).setPreferredDomesticCarrierCode("");
