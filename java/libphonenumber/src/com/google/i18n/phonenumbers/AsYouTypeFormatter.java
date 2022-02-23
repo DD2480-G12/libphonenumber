@@ -353,30 +353,34 @@ public class AsYouTypeFormatter {
         }
         // fall through
       default:
-        if (isExpectingCountryCallingCode) {
-          if (attemptToExtractCountryCallingCode()) {
-            isExpectingCountryCallingCode = false;
-          }
-          return prefixBeforeNationalNumber + nationalNumber.toString();
-        }
-        if (possibleFormats.size() > 0) {  // The formatting patterns are already chosen.
-          String tempNationalNumber = inputDigitHelper(nextChar);
-          // See if the accrued digits can be formatted properly already. If not, use the results
-          // from inputDigitHelper, which does formatting based on the formatting pattern chosen.
-          String formattedNumber = attemptToFormatAccruedDigits();
-          if (formattedNumber.length() > 0) {
-            return formattedNumber;
-          }
-          narrowDownPossibleFormats(nationalNumber.toString());
-          if (maybeCreateNewTemplate()) {
-            return inputAccruedNationalNumber();
-          }
-          return ableToFormat
-             ? appendNationalNumber(tempNationalNumber)
-             : accruedInput.toString();
-        } else {
-          return attemptToChooseFormattingPattern();
-        }
+        return formatWhenAccruedInputFallThrough(nextChar);
+    }
+  }
+
+  private String formatWhenAccruedInputFallThrough(char nextChar){
+    if (isExpectingCountryCallingCode) {
+      if (attemptToExtractCountryCallingCode()) {
+        isExpectingCountryCallingCode = false;
+      }
+      return prefixBeforeNationalNumber + nationalNumber.toString();
+    }
+    if (possibleFormats.size() > 0) {  // The formatting patterns are already chosen.
+      String tempNationalNumber = inputDigitHelper(nextChar);
+      // See if the accrued digits can be formatted properly already. If not, use the results
+      // from inputDigitHelper, which does formatting based on the formatting pattern chosen.
+      String formattedNumber = attemptToFormatAccruedDigits();
+      if (formattedNumber.length() > 0) {
+        return formattedNumber;
+      }
+      narrowDownPossibleFormats(nationalNumber.toString());
+      if (maybeCreateNewTemplate()) {
+        return inputAccruedNationalNumber();
+      }
+      return ableToFormat
+              ? appendNationalNumber(tempNationalNumber)
+              : accruedInput.toString();
+    } else {
+      return attemptToChooseFormattingPattern();
     }
   }
 
