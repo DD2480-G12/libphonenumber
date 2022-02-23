@@ -872,6 +872,7 @@ public final class Phonemetadata {
     }
 
     public void writeExternal(ObjectOutput objectOutput) throws IOException {
+      // entire method untested
       objectOutput.writeBoolean(hasGeneralDesc);
       if (hasGeneralDesc) {
         generalDesc_.writeExternal(objectOutput);

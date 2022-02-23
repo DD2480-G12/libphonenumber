@@ -19,14 +19,11 @@ package com.google.i18n.phonenumbers;
 import com.google.i18n.phonenumbers.Phonemetadata.PhoneMetadata;
 
 import java.io.*;
-import java.text.NumberFormat;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import junit.framework.TestCase;
 
 import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
-import static org.mockito.Mockito.*;
 
 
 /**
@@ -221,6 +218,200 @@ public class MetadataManagerTest extends TestCase {
 
     } catch (Exception e) {
       fail("Did not expect exception: " + e);
+    }
+  }
+
+  // This test tests compatibility between writeExternal and readExternal
+  // These are used in conjunction to store/load objects from a stream (e.g. a file)
+  // For it to pass any mistakes in writeExternal would have to be in readExternal, too
+  // To test it, multiple significantly different PhoneMetadata objects are stored/loaded
+  public void testWriteExternalEmptyPhoneMetadataCanBeRead() {
+
+    PhoneMetadata pm1 = new PhoneMetadata();
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      pm1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      PhoneMetadata pm2 = new PhoneMetadata();
+      pm2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      pm2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      assertTrue(Arrays.equals(output1, output2));
+
+    } catch (Exception e) {
+      fail("Did not expect exception..." + e);
+    }
+  }
+
+  public void testWriteExternalOnShortNumberMetadataCanBeRead() {
+
+    PhoneMetadata pm1 = MetadataManager.getShortNumberMetadataForRegion("US");
+
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      pm1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      PhoneMetadata pm2 = new PhoneMetadata();
+      pm2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      pm2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal and readExternal are compatible
+      assertTrue(Arrays.equals(output1, output2));
+
+    } catch (Exception e) {
+      fail("Did not expect exception..." + e);
+    }
+  }
+
+  public void testWriteExternalOnTypicalMetadataCanBeRead() {
+    ConcurrentHashMap<String, PhoneMetadata> map = new ConcurrentHashMap<String, PhoneMetadata>();
+    PhoneMetadata pm1 = MetadataManager.getMetadataFromMultiFilePrefix("CA", map,
+            "/com/google/i18n/phonenumbers/data/PhoneNumberMetadataProtoForTesting",
+            MetadataManager.DEFAULT_METADATA_LOADER);
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      pm1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      PhoneMetadata pm2 = new PhoneMetadata();
+      pm2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      pm2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal and readExternal are compatible
+      assertTrue(Arrays.equals(output1, output2));
+
+    } catch (Exception e) {
+      fail("Did not expect exception..." + e);
+    }
+  }
+
+  public void testWriteExternalOnNonTypicalMetadataCanBeRead() {
+    MultiFileMetadataSourceImpl source =
+            new MultiFileMetadataSourceImpl(MetadataManager.DEFAULT_METADATA_LOADER);
+    PhoneMetadata pm1 = source.getMetadataForNonGeographicalRegion(800);
+
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      pm1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      PhoneMetadata pm2 = new PhoneMetadata();
+      pm2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      pm2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal and readExternal are compatible
+      assertTrue(Arrays.equals(output1, output2));
+
+    } catch (Exception e) {
+      fail("Did not expect exception..." + e);
+    }
+  }
+
+  public void testWriteExternalOnDetailedMetadataCanBeReadAndHasRightProperties() {
+
+    ConcurrentHashMap<String, PhoneMetadata> map = new ConcurrentHashMap<String, PhoneMetadata>();
+    PhoneMetadata pm1 = MetadataManager.getMetadataFromMultiFilePrefix("US", map,
+            "/com/google/i18n/phonenumbers/data/PhoneNumberMetadataProtoForTesting",
+            MetadataManager.DEFAULT_METADATA_LOADER);
+
+    // Some properties are sampled, and it is asserted that they are written when calling writeExternal
+    pm1.setInternationalPrefix("001");
+    pm1.setPreferredInternationalPrefix("002");
+    pm1.setNationalPrefixTransformRule("5$15");
+    pm1.setLeadingDigits("000");
+
+    try {
+      ByteArrayOutputStream buffer1 = new ByteArrayOutputStream();
+
+      ObjectOutput out1 = new ObjectOutputStream(buffer1);
+
+      pm1.writeExternal(out1);
+      out1.close();
+
+      ByteArrayInputStream buffer2 = new ByteArrayInputStream(buffer1.toByteArray());
+      ObjectInput in = new ObjectInputStream(buffer2);
+      PhoneMetadata pm2 = new PhoneMetadata();
+      pm2.readExternal(in);
+      in.close();
+
+      ByteArrayOutputStream buffer3 = new ByteArrayOutputStream();
+      ObjectOutput out2 = new ObjectOutputStream(buffer3);
+
+      pm2.writeExternal(out2);
+      out2.close();
+
+      byte[] output1 = buffer1.toByteArray();
+      byte[] output2 = buffer3.toByteArray();
+
+      // assert that writeExternal and readExternal are compatible
+      assertTrue(Arrays.equals(output1, output2));
+
+      // assert that some properties are written when using writeExternal
+      assertTrue(pm2.getInternationalPrefix().equals(pm1.getInternationalPrefix()));
+      assertTrue(pm2.getPreferredInternationalPrefix().equals(pm1.getPreferredInternationalPrefix()));
+      assertTrue(pm2.getNationalPrefixTransformRule().equals(pm1.getNationalPrefixTransformRule()));
+      assertTrue(pm2.getLeadingDigits().equals(pm1.getLeadingDigits()));
+
+    } catch (Exception e) {
+      fail("Did not expect exception..." + e);
     }
   }
 
