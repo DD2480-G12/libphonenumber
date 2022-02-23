@@ -1186,9 +1186,11 @@ public final class Phonemetadata {
     public int getMetadataCount() { return metadata_.size(); }
 
     public PhoneMetadataCollection addMetadata(PhoneMetadata value) {
+      // untested: value == null
       if (value == null) {
         throw new NullPointerException();
       }
+      // untested: value != null
       metadata_.add(value);
       return this;
     }

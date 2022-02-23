@@ -415,4 +415,26 @@ public class MetadataManagerTest extends TestCase {
     }
   }
 
+  public void testPhoneMetadataCollectionAddMetadata() {
+    MultiFileMetadataSourceImpl source =
+            new MultiFileMetadataSourceImpl(MetadataManager.DEFAULT_METADATA_LOADER);
+
+    PhoneMetadata pm1 = source.getMetadataForRegion("US");
+
+    Phonemetadata.PhoneMetadataCollection pmc = Phonemetadata.PhoneMetadataCollection.newBuilder().addMetadata(pm1);
+
+    assertTrue(reflectionEquals(pm1, pmc.getMetadataList().get(0)));
+
+  }
+
+  public void testPhoneMetadataCollectionAddMetadataNullInput() {
+    try {
+      Phonemetadata.PhoneMetadataCollection pmc = Phonemetadata.PhoneMetadataCollection.newBuilder().addMetadata(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException e)
+    {
+      // Expecting NullPointerException
+    }
+  }
+
 }
