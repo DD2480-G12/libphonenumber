@@ -422,8 +422,10 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
   }
 
   public void testGetExampleNumberForNonGeoEntity() {
+    assertNull(phoneUtil.getExampleNumberForNonGeoEntity(1337));
     assertEquals(INTERNATIONAL_TOLL_FREE, phoneUtil.getExampleNumberForNonGeoEntity(800));
     assertEquals(UNIVERSAL_PREMIUM_RATE, phoneUtil.getExampleNumberForNonGeoEntity(979));
+
   }
 
   public void testGetExampleNumberWithoutRegion() {
@@ -908,6 +910,8 @@ public class PhoneNumberUtilTest extends TestMetadataTestCase {
     assertEquals("000", phoneUtil.formatNumberForMobileDialing(auNumber, RegionCode.AU, false));
     assertEquals("", phoneUtil.formatNumberForMobileDialing(auNumber, RegionCode.NZ, false));
   }
+
+
 
   public void testFormatByPattern() {
     NumberFormat.Builder newNumFormat = NumberFormat.newBuilder();
