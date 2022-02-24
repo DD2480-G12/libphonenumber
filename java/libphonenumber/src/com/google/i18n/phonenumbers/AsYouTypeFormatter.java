@@ -165,8 +165,17 @@ public class AsYouTypeFormatter {
   }
 
   private void getAvailableFormats(String leadingDigits) {
+    /**
+     * 1 (Beginning of function)
+     */
     // First decide whether we should use international or national number rules.
+    /**
+     * 1
+     */
     boolean isInternationalNumber = isCompleteNumber && extractedNationalPrefix.length() == 0;
+    /**
+     * 2 (ternary and &&)
+     */
     List<NumberFormat> formatList =
         (isInternationalNumber && currentMetadata.getIntlNumberFormatCount() > 0)
             ? currentMetadata.getIntlNumberFormatList()
@@ -174,6 +183,9 @@ public class AsYouTypeFormatter {
     for (NumberFormat format : formatList) {
       // Discard a few formats that we know are not relevant based on the presence of the national
       // prefix.
+      /**
+       * 4
+       */
       if (extractedNationalPrefix.length() > 0
           && PhoneNumberUtil.formattingRuleHasFirstGroupOnly(
               format.getNationalPrefixFormattingRule())
@@ -184,7 +196,11 @@ public class AsYouTypeFormatter {
         // kept since the national prefix might actually be an extracted carrier code - we don't
         // distinguish between these when extracting it in the AYTF.
         continue;
-      } else if (extractedNationalPrefix.length() == 0
+      }
+      /**
+       * 4
+       */
+      else if (extractedNationalPrefix.length() == 0
           && !isCompleteNumber
           && !PhoneNumberUtil.formattingRuleHasFirstGroupOnly(
               format.getNationalPrefixFormattingRule())
@@ -193,6 +209,9 @@ public class AsYouTypeFormatter {
         // so we discard it.
         continue;
       }
+      /**
+       * 1
+       */
       if (ELIGIBLE_FORMAT_PATTERN.matcher(format.getFormat()).matches()) {
         possibleFormats.add(format);
       }
